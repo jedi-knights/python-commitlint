@@ -1,5 +1,5 @@
-from python_commitlint.enums import RuleCondition
-from python_commitlint.models import (
+from python_commitlint.core.enums import RuleCondition
+from python_commitlint.core.models import (
     CommitMessage,
     RuleConfig,
     ValidationError,

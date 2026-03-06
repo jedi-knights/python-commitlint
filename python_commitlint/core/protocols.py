@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from python_commitlint.models import (
+from python_commitlint.core.models import (
     CommitMessage,
     Configuration,
     LintResult,

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from python_commitlint.models import (
+from python_commitlint.core.models import (
     CommitMessage,
     RuleConfig,
     ValidationError,

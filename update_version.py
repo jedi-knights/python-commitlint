@@ -46,7 +46,9 @@ def update_json_file(path: Path, version: str) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Update version in project files.")
+    parser = argparse.ArgumentParser(
+        description="Update version in project files."
+    )
     parser.add_argument("version", type=str, help="The new version to set")
     args = parser.parse_args()
 

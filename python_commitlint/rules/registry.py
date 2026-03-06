@@ -1,5 +1,5 @@
-from python_commitlint.protocols import RuleProtocol
-from python_commitlint.rules import (
+from python_commitlint.core.protocols import RuleProtocol
+from python_commitlint.rules.body_rules import (
     BodyCaseRule,
     BodyEmptyRule,
     BodyFullStopRule,
@@ -7,26 +7,36 @@ from python_commitlint.rules import (
     BodyMaxLengthRule,
     BodyMaxLineLengthRule,
     BodyMinLengthRule,
+)
+from python_commitlint.rules.footer_rules import (
     FooterEmptyRule,
     FooterLeadingBlankRule,
     FooterMaxLengthRule,
     FooterMaxLineLengthRule,
     FooterMinLengthRule,
+)
+from python_commitlint.rules.header_rules import (
     HeaderCaseRule,
     HeaderFullStopRule,
     HeaderMaxLengthRule,
     HeaderMinLengthRule,
     HeaderTrimRule,
+)
+from python_commitlint.rules.scope_rules import (
     ScopeCaseRule,
     ScopeEmptyRule,
     ScopeEnumRule,
     ScopeMaxLengthRule,
     ScopeMinLengthRule,
+)
+from python_commitlint.rules.subject_rules import (
     SubjectCaseRule,
     SubjectEmptyRule,
     SubjectFullStopRule,
     SubjectMaxLengthRule,
     SubjectMinLengthRule,
+)
+from python_commitlint.rules.type_rules import (
     TypeCaseRule,
     TypeEmptyRule,
     TypeEnumRule,

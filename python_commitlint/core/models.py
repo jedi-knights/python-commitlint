@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from python_commitlint.enums import (
+from python_commitlint.core.enums import (
     CaseType,
     RuleCondition,
     Severity,

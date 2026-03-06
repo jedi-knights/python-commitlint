@@ -3,7 +3,7 @@ from pathlib import Path
 
 import click
 
-from python_commitlint.converter import convert_js_to_yaml
+from python_commitlint.config.converter import convert_js_to_yaml
 from python_commitlint.linter import CommitLinterFactory
 
 
@@ -115,7 +115,7 @@ def _get_commit_message(message: str | None, stdin: bool) -> str | None:
 
 
 def _print_text_output(result: object, quiet: bool) -> None:
-    from python_commitlint.models import LintResult
+    from python_commitlint.core.models import LintResult
 
     if not isinstance(result, LintResult):
         return
@@ -144,7 +144,7 @@ def _print_warning_lines(warnings: list) -> None:
 
 
 def _print_status_summary(result: object, quiet: bool) -> None:
-    from python_commitlint.models import LintResult
+    from python_commitlint.core.models import LintResult
 
     if not isinstance(result, LintResult):
         return
@@ -152,11 +152,13 @@ def _print_status_summary(result: object, quiet: bool) -> None:
         _print_error_count(result)
         return
     if not result.has_warnings and not quiet:
-        click.echo(click.style("Commit message is valid!", fg="green", bold=True))
+        click.echo(
+            click.style("Commit message is valid!", fg="green", bold=True)
+        )
 
 
 def _print_error_count(result: object) -> None:
-    from python_commitlint.models import LintResult
+    from python_commitlint.core.models import LintResult
 
     if not isinstance(result, LintResult):
         return
@@ -170,7 +172,7 @@ def _print_error_count(result: object) -> None:
 def _print_json_output(result: object) -> None:
     import json
 
-    from python_commitlint.models import LintResult
+    from python_commitlint.core.models import LintResult
 
     if not isinstance(result, LintResult):
         return

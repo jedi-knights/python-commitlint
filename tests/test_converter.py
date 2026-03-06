@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import pytest
-
-from python_commitlint.converter import CommitlintConfigConverter, convert_js_to_yaml
-
+from python_commitlint.config.converter import (
+    CommitlintConfigConverter,
+    convert_js_to_yaml,
+)
 
 JS_CONFIG_SIMPLE = """
 module.exports = {
@@ -67,7 +67,9 @@ def test_converter_handles_no_extends() -> None:
     assert "type-empty" in result
 
 
-def test_convert_js_to_yaml_reads_file_and_returns_string(tmp_path: Path) -> None:
+def test_convert_js_to_yaml_reads_file_and_returns_string(
+    tmp_path: Path,
+) -> None:
     js_file = tmp_path / "commitlint.config.js"
     js_file.write_text(JS_CONFIG_SIMPLE)
     result = convert_js_to_yaml(js_file)
@@ -85,7 +87,9 @@ def test_convert_js_to_yaml_writes_output_file(tmp_path: Path) -> None:
     assert "type-enum" in content
 
 
-def test_convert_js_to_yaml_no_output_path_does_not_write(tmp_path: Path) -> None:
+def test_convert_js_to_yaml_no_output_path_does_not_write(
+    tmp_path: Path,
+) -> None:
     js_file = tmp_path / "commitlint.config.js"
     js_file.write_text(JS_CONFIG_SIMPLE)
     result = convert_js_to_yaml(js_file)

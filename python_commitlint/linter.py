@@ -1,24 +1,24 @@
-from python_commitlint.configuration import (
+from python_commitlint.config.configuration import (
     ConfigurationLoader,
     ConfigurationLoaderFactory,
 )
-from python_commitlint.enums import Severity
-from python_commitlint.models import (
+from python_commitlint.core.enums import Severity
+from python_commitlint.core.models import (
     CommitMessage,
     Configuration,
     LintResult,
     RuleConfig,
     ValidationError,
 )
+from python_commitlint.core.protocols import (
+    CommitParserProtocol,
+    ConfigurationLoaderProtocol,
+)
 from python_commitlint.parser import (
     CommitParserFactory,
     ConventionalCommitParser,
 )
-from python_commitlint.protocols import (
-    CommitParserProtocol,
-    ConfigurationLoaderProtocol,
-)
-from python_commitlint.rule_registry import (
+from python_commitlint.rules.registry import (
     RuleRegistry,
     RuleRegistryFactory,
 )
@@ -58,7 +58,9 @@ class CommitLinter:
 
         commit = self._parser.parse(message)
         errors, warnings = self._collect_violations(commit)
-        return LintResult(valid=len(errors) == 0, errors=errors, warnings=warnings)
+        return LintResult(
+            valid=len(errors) == 0, errors=errors, warnings=warnings
+        )
 
     def _collect_violations(
         self, commit: CommitMessage

@@ -1,11 +1,11 @@
-from python_commitlint.case_validators import CaseValidator
-from python_commitlint.enums import CaseType, RuleCondition
-from python_commitlint.models import (
+from python_commitlint.core.enums import CaseType, RuleCondition
+from python_commitlint.core.models import (
     CommitMessage,
     RuleConfig,
     ValidationError,
 )
 from python_commitlint.rules.base import BaseRule
+from python_commitlint.rules.case_validators import CaseValidator
 
 
 class TypeEmptyRule(BaseRule):

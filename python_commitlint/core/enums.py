@@ -1,18 +1,18 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     DISABLED = "disabled"
     WARNING = "warning"
     ERROR = "error"
 
 
-class RuleCondition(str, Enum):
+class RuleCondition(StrEnum):
     ALWAYS = "always"
     NEVER = "never"
 
 
-class CaseType(str, Enum):
+class CaseType(StrEnum):
     LOWER_CASE = "lower-case"
     UPPER_CASE = "upper-case"
     CAMEL_CASE = "camel-case"
@@ -23,7 +23,7 @@ class CaseType(str, Enum):
     START_CASE = "start-case"
 
 
-class CommitType(str, Enum):
+class CommitType(StrEnum):
     BUILD = "build"
     CHORE = "chore"
     CI = "ci"

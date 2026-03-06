@@ -1,6 +1,6 @@
 import re
 
-from python_commitlint.models import CommitMessage
+from python_commitlint.core.models import CommitMessage
 
 
 class ConventionalCommitParser:

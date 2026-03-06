@@ -4,11 +4,11 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-from python_commitlint.enums import (
+from python_commitlint.core.enums import (
     RuleCondition,
     Severity,
 )
-from python_commitlint.models import Configuration, RuleConfig
+from python_commitlint.core.models import Configuration, RuleConfig
 
 
 class ConfigurationLoader:

@@ -1,7 +1,5 @@
-import pytest
-
-from python_commitlint.enums import RuleCondition, Severity
-from python_commitlint.models import CommitMessage, RuleConfig
+from python_commitlint.core.enums import RuleCondition, Severity
+from python_commitlint.core.models import CommitMessage, RuleConfig
 from python_commitlint.rules.footer_rules import (
     FooterEmptyRule,
     FooterLeadingBlankRule,
@@ -25,11 +23,14 @@ def _commit(footer: str = "", raw: str = "") -> CommitMessage:
     )
 
 
-def _config(condition: RuleCondition, value=None, severity: Severity = Severity.ERROR) -> RuleConfig:
+def _config(
+    condition: RuleCondition, value=None, severity: Severity = Severity.ERROR
+) -> RuleConfig:
     return RuleConfig(severity=severity, condition=condition, value=value)
 
 
 # --- FooterEmptyRule ---
+
 
 def test_footer_empty_rule_passes_empty_with_always() -> None:
     rule = FooterEmptyRule()
@@ -38,14 +39,19 @@ def test_footer_empty_rule_passes_empty_with_always() -> None:
 
 def test_footer_empty_rule_fails_non_empty_with_always() -> None:
     rule = FooterEmptyRule()
-    result = rule.validate(_commit("Reviewed-by: Bob"), _config(RuleCondition.ALWAYS))
+    result = rule.validate(
+        _commit("Reviewed-by: Bob"), _config(RuleCondition.ALWAYS)
+    )
     assert result is not None
     assert "empty" in result.message
 
 
 def test_footer_empty_rule_passes_non_empty_with_never() -> None:
     rule = FooterEmptyRule()
-    assert rule.validate(_commit("Reviewed-by: Bob"), _config(RuleCondition.NEVER)) is None
+    assert (
+        rule.validate(_commit("Reviewed-by: Bob"), _config(RuleCondition.NEVER))
+        is None
+    )
 
 
 def test_footer_empty_rule_fails_empty_with_never() -> None:
@@ -59,6 +65,7 @@ def test_footer_empty_rule_name() -> None:
 
 
 # --- FooterLeadingBlankRule ---
+
 
 def test_footer_leading_blank_rule_passes_with_blank_line() -> None:
     rule = FooterLeadingBlankRule()
@@ -99,21 +106,32 @@ def test_footer_leading_blank_rule_name() -> None:
 
 # --- FooterMaxLengthRule ---
 
+
 def test_footer_max_length_rule_passes_within_max() -> None:
     rule = FooterMaxLengthRule()
-    assert rule.validate(_commit("Reviewed-by: Bob"), _config(RuleCondition.ALWAYS, value=100)) is None
+    assert (
+        rule.validate(
+            _commit("Reviewed-by: Bob"),
+            _config(RuleCondition.ALWAYS, value=100),
+        )
+        is None
+    )
 
 
 def test_footer_max_length_rule_fails_when_exceeds_max() -> None:
     rule = FooterMaxLengthRule()
-    result = rule.validate(_commit("Reviewed-by: Bob"), _config(RuleCondition.ALWAYS, value=5))
+    result = rule.validate(
+        _commit("Reviewed-by: Bob"), _config(RuleCondition.ALWAYS, value=5)
+    )
     assert result is not None
     assert "5" in result.message
 
 
 def test_footer_max_length_rule_skips_empty_footer() -> None:
     rule = FooterMaxLengthRule()
-    assert rule.validate(_commit(), _config(RuleCondition.ALWAYS, value=5)) is None
+    assert (
+        rule.validate(_commit(), _config(RuleCondition.ALWAYS, value=5)) is None
+    )
 
 
 def test_footer_max_length_rule_name() -> None:
@@ -122,22 +140,34 @@ def test_footer_max_length_rule_name() -> None:
 
 # --- FooterMaxLineLengthRule ---
 
+
 def test_footer_max_line_length_rule_passes_within_limit() -> None:
     rule = FooterMaxLineLengthRule()
-    assert rule.validate(_commit("Reviewed-by: Bob"), _config(RuleCondition.ALWAYS, value=100)) is None
+    assert (
+        rule.validate(
+            _commit("Reviewed-by: Bob"),
+            _config(RuleCondition.ALWAYS, value=100),
+        )
+        is None
+    )
 
 
 def test_footer_max_line_length_rule_fails_on_long_line() -> None:
     rule = FooterMaxLineLengthRule()
     long_footer = "Reviewed-by: " + "x" * 200
-    result = rule.validate(_commit(long_footer), _config(RuleCondition.ALWAYS, value=50))
+    result = rule.validate(
+        _commit(long_footer), _config(RuleCondition.ALWAYS, value=50)
+    )
     assert result is not None
     assert "50" in result.message
 
 
 def test_footer_max_line_length_rule_skips_empty_footer() -> None:
     rule = FooterMaxLineLengthRule()
-    assert rule.validate(_commit(), _config(RuleCondition.ALWAYS, value=10)) is None
+    assert (
+        rule.validate(_commit(), _config(RuleCondition.ALWAYS, value=10))
+        is None
+    )
 
 
 def test_footer_max_line_length_rule_name() -> None:
@@ -146,21 +176,31 @@ def test_footer_max_line_length_rule_name() -> None:
 
 # --- FooterMinLengthRule ---
 
+
 def test_footer_min_length_rule_passes_when_meets_min() -> None:
     rule = FooterMinLengthRule()
-    assert rule.validate(_commit("Reviewed-by: Bob"), _config(RuleCondition.ALWAYS, value=5)) is None
+    assert (
+        rule.validate(
+            _commit("Reviewed-by: Bob"), _config(RuleCondition.ALWAYS, value=5)
+        )
+        is None
+    )
 
 
 def test_footer_min_length_rule_fails_when_below_min() -> None:
     rule = FooterMinLengthRule()
-    result = rule.validate(_commit("Bob"), _config(RuleCondition.ALWAYS, value=50))
+    result = rule.validate(
+        _commit("Bob"), _config(RuleCondition.ALWAYS, value=50)
+    )
     assert result is not None
     assert "50" in result.message
 
 
 def test_footer_min_length_rule_skips_empty_footer() -> None:
     rule = FooterMinLengthRule()
-    assert rule.validate(_commit(), _config(RuleCondition.ALWAYS, value=5)) is None
+    assert (
+        rule.validate(_commit(), _config(RuleCondition.ALWAYS, value=5)) is None
+    )
 
 
 def test_footer_min_length_rule_name() -> None:

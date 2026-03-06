@@ -1,6 +1,6 @@
 import re
 
-from python_commitlint.enums import CaseType
+from python_commitlint.core.enums import CaseType
 
 
 class CaseValidator:

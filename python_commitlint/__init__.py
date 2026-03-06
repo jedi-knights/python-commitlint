@@ -1,12 +1,12 @@
-from python_commitlint.converter import (
+from python_commitlint.config.converter import (
     CommitlintConfigConverter,
     convert_js_to_yaml,
 )
-from python_commitlint.linter import CommitLinterFactory
-from python_commitlint.models import (
+from python_commitlint.core.models import (
     LintResult,
     ValidationError,
 )
+from python_commitlint.linter import CommitLinterFactory
 
 __all__ = [
     "CommitLinterFactory",

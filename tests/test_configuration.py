@@ -1,9 +1,7 @@
 from pathlib import Path
 
-import pytest
-
-from python_commitlint.configuration import ConfigurationLoader
-from python_commitlint.enums import RuleCondition, Severity
+from python_commitlint.config.configuration import ConfigurationLoader
+from python_commitlint.core.enums import RuleCondition, Severity
 
 
 def test_load_default_config_when_no_file_exists(tmp_path: Path) -> None:

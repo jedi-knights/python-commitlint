@@ -7,9 +7,24 @@ from python_commitlint.parser import ConventionalCommitParser
     "message,expected_type,expected_scope,expected_subject",
     [
         ("feat: add new feature", "feat", "", "add new feature"),
-        ("fix(api): resolve timeout issue", "fix", "api", "resolve timeout issue"),
-        ("docs: update installation guide", "docs", "", "update installation guide"),
-        ("chore(deps): upgrade dependencies", "chore", "deps", "upgrade dependencies"),
+        (
+            "fix(api): resolve timeout issue",
+            "fix",
+            "api",
+            "resolve timeout issue",
+        ),
+        (
+            "docs: update installation guide",
+            "docs",
+            "",
+            "update installation guide",
+        ),
+        (
+            "chore(deps): upgrade dependencies",
+            "chore",
+            "deps",
+            "upgrade dependencies",
+        ),
         ("feat!: breaking change", "feat", "", "breaking change"),
         ("fix(api)!: breaking fix", "fix", "api", "breaking fix"),
     ],
@@ -44,7 +59,9 @@ def test_parse_breaking_change_via_exclamation(
 def test_parse_breaking_change_via_footer(
     parser: ConventionalCommitParser,
 ) -> None:
-    message = "feat: add feature\n\nSome body\n\nBREAKING CHANGE: something changed"
+    message = (
+        "feat: add feature\n\nSome body\n\nBREAKING CHANGE: something changed"
+    )
     result = parser.parse(message)
     assert result.breaking is True
 
