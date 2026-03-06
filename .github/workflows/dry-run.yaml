@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: 'lts/*'
+  PYTHON_VERSION: '3.13'
 
 jobs:
   semantic-release-dryrun:
@@ -25,23 +25,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          enable-cache: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache Node.js modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
 
-      - name: Install Node.js dependencies
-        run: npm install --no-fund
+      - name: Install dependencies
+        run: uv sync --extra dev
 
       - name: Semantic Release Dry Run
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release --dry-run
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uv run semantic-release version --noop
