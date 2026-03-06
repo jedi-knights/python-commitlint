@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 
 env:
+  NODE_VERSION: 'lts/*'
   PYTHON_VERSION: '3.13'
 
 jobs:
@@ -85,3 +86,35 @@ jobs:
 
       - name: Run tests
         run: uv run pytest --cov=python_commitlint --cov-report=term-missing
+
+  semantic-release-dryrun:
+    name: Semantic Release Dry Run
+    runs-on: ubuntu-latest
+    needs: [lint-commit-message, lint-python, test-python]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Node.js dependencies
+        run: npm install --no-fund
+
+      - name: Semantic Release Dry Run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx semantic-release --dry-run

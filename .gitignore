@@ -25,3 +25,6 @@ junit.xml
 
 # uv
 uv.lock.bak
+
+# Node.js
+node_modules/

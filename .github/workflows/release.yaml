@@ -3,16 +3,18 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - 'main'
   workflow_dispatch:
 
 permissions:
   contents: write
   issues: write
   pull-requests: write
-  id-token: write
+  packages: write
+  actions: write
 
 env:
+  NODE_VERSION: 'lts/*'
   PYTHON_VERSION: '3.13'
 
 jobs:
@@ -29,6 +31,19 @@ jobs:
           ref: ${{ github.ref }}
           clean: true
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
@@ -38,7 +53,10 @@ jobs:
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies
+      - name: Install Node.js dependencies
+        run: npm install --no-fund
+
+      - name: Install Python dependencies
         run: uv sync --no-dev
 
       - name: Configure Git user
@@ -46,16 +64,25 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Run semantic release
+      - name: Run Semantic Release
         id: semantic_release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uv run semantic-release run
+          DEBUG: semantic-release:*
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx semantic-release
 
-      - name: Build package
-        if: steps.semantic_release.outputs.version_changed == 'true'
-        run: uv build
+      - name: Check if a release is needed
+        run: |
+          echo "version_changed=${{ steps.semantic_release.outputs.version_changed }}"
+          echo "outcome=${{ steps.semantic_release.outcome }}"
 
-      - name: Publish to PyPI
-        if: steps.semantic_release.outputs.version_changed == 'true'
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Build and publish package
+        if: steps.semantic_release.outcome == 'success' && steps.semantic_release.outputs.version_changed == 'true'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          echo "Deploying to PyPI..."
+          uv build
+          pip install twine
+          python3 -m twine upload --repository pypi dist/*
