@@ -10,11 +10,6 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
-  packages: write
-  actions: write
-
-env:
-  PYTHON_VERSION: '3.13'
 
 jobs:
   release:
@@ -29,43 +24,56 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref }}
           clean: true
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: uv sync --extra dev
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Configure Git user
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Run Semantic Release
-        id: semantic_release
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          uv run semantic-release version --push && echo "version_changed=true" >> $GITHUB_OUTPUT || {
-            code=$?
-            [ $code -eq 2 ] || exit $code
-          }
+      - name: Capture version before release
+        id: before
+        run: echo "version=$(cat VERSION 2>/dev/null || echo '')" >> $GITHUB_OUTPUT
 
-      - name: Publish to GitHub Release
-        if: steps.semantic_release.outputs.version_changed == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: uv run semantic-release publish
+      - name: Run Semantic Release
+        uses: jedi-knights/go-semantic-release@v0.10.2
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+
+      - name: Capture version after release
+        id: after
+        run: echo "version=$(cat VERSION 2>/dev/null || echo '')" >> $GITHUB_OUTPUT
+
+      - name: Determine if release happened
+        id: released
+        run: |
+          if [ -n "${{ steps.after.outputs.version }}" ] && [ "${{ steps.before.outputs.version }}" != "${{ steps.after.outputs.version }}" ]; then
+            echo "yes=true" >> $GITHUB_OUTPUT
+          else
+            echo "yes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install uv
+        if: steps.released.outputs.yes == 'true'
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        if: steps.released.outputs.yes == 'true'
+        run: uv python install
+
+      - name: Install dependencies
+        if: steps.released.outputs.yes == 'true'
+        run: uv sync --extra dev
+
+      - name: Build distribution
+        if: steps.released.outputs.yes == 'true'
+        run: uv build
 
       - name: Publish to PyPI
-        if: steps.semantic_release.outputs.version_changed == 'true'
+        if: steps.released.outputs.yes == 'true'
         env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: uv run twine upload dist/*
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: uv publish
