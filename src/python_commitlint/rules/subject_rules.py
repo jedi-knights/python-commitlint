@@ -1,3 +1,5 @@
+"""Rules that validate the subject (the text after ``type(scope):``)."""
+
 from python_commitlint.core.enums import CaseType, RuleCondition
 from python_commitlint.core.models import (
     CommitMessage,
@@ -9,6 +11,8 @@ from python_commitlint.rules.case_validators import CaseValidator
 
 
 class SubjectEmptyRule(BaseRule):
+    """Require or forbid an empty subject. Rule name: ``subject-empty``."""
+
     @property
     def name(self) -> str:
         return "subject-empty"
@@ -30,6 +34,8 @@ class SubjectEmptyRule(BaseRule):
 
 
 class SubjectCaseRule(BaseRule):
+    """Enforce one or more case styles on the subject. Rule name: ``subject-case``."""
+
     @property
     def name(self) -> str:
         return "subject-case"
@@ -37,7 +43,7 @@ class SubjectCaseRule(BaseRule):
     def validate(
         self, commit: CommitMessage, config: RuleConfig
     ) -> ValidationError | None:
-        if not commit.subject:
+        if not commit.subject or config.value is None:
             return None
 
         case_types = (
@@ -59,6 +65,8 @@ class SubjectCaseRule(BaseRule):
 
 
 class SubjectFullStopRule(BaseRule):
+    """Require or forbid a trailing punctuation character. Rule name: ``subject-full-stop``."""
+
     @property
     def name(self) -> str:
         return "subject-full-stop"
@@ -69,7 +77,7 @@ class SubjectFullStopRule(BaseRule):
         if not commit.subject:
             return None
 
-        stop_char = config.value or "."
+        stop_char = config.value if config.value is not None else "."
         ends_with_stop = commit.subject.endswith(stop_char)
         should_end_with_stop = config.condition == RuleCondition.ALWAYS
 
@@ -84,6 +92,8 @@ class SubjectFullStopRule(BaseRule):
 
 
 class SubjectMinLengthRule(BaseRule):
+    """Enforce a minimum subject length. Rule name: ``subject-min-length``."""
+
     @property
     def name(self) -> str:
         return "subject-min-length"
@@ -94,7 +104,7 @@ class SubjectMinLengthRule(BaseRule):
         if not commit.subject:
             return None
 
-        min_length = config.value or 0
+        min_length = config.value if config.value is not None else 0
         is_valid = len(commit.subject) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -106,6 +116,8 @@ class SubjectMinLengthRule(BaseRule):
 
 
 class SubjectMaxLengthRule(BaseRule):
+    """Enforce a maximum subject length. Rule name: ``subject-max-length``."""
+
     @property
     def name(self) -> str:
         return "subject-max-length"
@@ -116,7 +128,7 @@ class SubjectMaxLengthRule(BaseRule):
         if not commit.subject:
             return None
 
-        max_length = config.value or float("inf")
+        max_length = config.value if config.value is not None else float("inf")
         is_valid = len(commit.subject) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 

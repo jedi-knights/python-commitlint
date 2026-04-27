@@ -1,5 +1,6 @@
+"""The commit linter — orchestrates parsing, rule dispatch, and aggregation."""
+
 from python_commitlint.config.configuration import (
-    ConfigurationLoader,
     ConfigurationLoaderFactory,
 )
 from python_commitlint.core.enums import Severity
@@ -14,10 +15,7 @@ from python_commitlint.core.protocols import (
     CommitParserProtocol,
     ConfigurationLoaderProtocol,
 )
-from python_commitlint.parser import (
-    CommitParserFactory,
-    ConventionalCommitParser,
-)
+from python_commitlint.parser import CommitParserFactory
 from python_commitlint.rules.registry import (
     RuleRegistry,
     RuleRegistryFactory,
@@ -29,6 +27,15 @@ def _categorize_violation(
     errors: list[ValidationError],
     warnings: list[ValidationError],
 ) -> None:
+    """Append a violation to the matching bucket based on severity.
+
+    Args:
+        violation: The validation error produced by a rule.
+        errors: Mutable list that receives ``ERROR``-severity violations.
+        warnings: Mutable list that receives ``WARNING``-severity violations.
+
+    DISABLED violations are ignored — neither bucket receives them.
+    """
     if violation.severity == Severity.ERROR:
         errors.append(violation)
     elif violation.severity == Severity.WARNING:
@@ -36,6 +43,14 @@ def _categorize_violation(
 
 
 class CommitLinter:
+    """Validates a commit message against a configured rule set.
+
+    The linter is constructed with all of its collaborators (parser, rule
+    registry, configuration loader) injected via :class:`CommitLinterFactory`
+    so it can be tested in isolation. Configuration is loaded eagerly in
+    ``__init__`` so the linter is reentrant.
+    """
+
     def __init__(
         self,
         parser: CommitParserProtocol,
@@ -43,31 +58,43 @@ class CommitLinter:
         config_loader: ConfigurationLoaderProtocol,
         config_path: str | None = None,
     ) -> None:
+        """Initialize the linter and load its configuration.
+
+        Args:
+            parser: Parser used to turn raw messages into :class:`CommitMessage`.
+            rule_registry: Registry the linter uses to look rules up by name.
+            config_loader: Loader that produces the resolved configuration.
+            config_path: Optional explicit configuration path.
+        """
         self._parser = parser
         self._rule_registry = rule_registry
-        self._config_loader = config_loader
-        self._config_path = config_path
-        self._configuration: Configuration | None = None
+        self._configuration: Configuration = config_loader.load(config_path)
 
     def lint(self, message: str) -> LintResult:
+        """Validate ``message`` against the configured rules.
+
+        Merge commits (first line beginning ``Merge ``) are short-circuited
+        as valid without applying any rules.
+
+        Args:
+            message: Raw commit message text.
+
+        Returns:
+            A :class:`LintResult` summarizing errors, warnings, and validity.
+        """
         if self._is_merge_commit(message):
             return LintResult(valid=True, errors=[], warnings=[])
 
-        if self._configuration is None:
-            self._configuration = self._config_loader.load(self._config_path)
-
         commit = self._parser.parse(message)
         errors, warnings = self._collect_violations(commit)
-        return LintResult(
-            valid=len(errors) == 0, errors=errors, warnings=warnings
-        )
+        return LintResult(valid=not errors, errors=errors, warnings=warnings)
 
     def _collect_violations(
         self, commit: CommitMessage
     ) -> tuple[list[ValidationError], list[ValidationError]]:
         errors: list[ValidationError] = []
         warnings: list[ValidationError] = []
-        for rule_name, rule_config in self._configuration.rules.items():  # type: ignore[union-attr]
+        for rule_name, rule_config in self._configuration.rules.items():
             self._apply_rule(rule_name, rule_config, commit, errors, warnings)
         return errors, warnings
 
@@ -89,20 +116,35 @@ class CommitLinter:
             _categorize_violation(violation, errors, warnings)
 
     def _is_merge_commit(self, message: str) -> bool:
-        first_line = message.split("\n")[0].strip()
-        return first_line.startswith("Merge ") or first_line.startswith(
-            "Merge branch "
-        )
+        first_line = message.split("\n", 1)[0].strip()
+        return first_line.startswith("Merge ")
 
 
 class CommitLinterFactory:
+    """Constructs :class:`CommitLinter` instances with sensible defaults."""
+
     @staticmethod
     def create(
-        parser: ConventionalCommitParser | None = None,
+        parser: CommitParserProtocol | None = None,
         rule_registry: RuleRegistry | None = None,
-        config_loader: ConfigurationLoader | None = None,
+        config_loader: ConfigurationLoaderProtocol | None = None,
         config_path: str | None = None,
     ) -> CommitLinter:
+        """Build a :class:`CommitLinter` wired with default collaborators.
+
+        Any collaborator can be overridden — useful for tests or for
+        embedding python-commitlint inside a larger toolchain.
+
+        Args:
+            parser: Optional parser; defaults to :class:`ConventionalCommitParser`.
+            rule_registry: Optional registry; defaults to one populated with
+                every built-in rule.
+            config_loader: Optional loader; defaults to :class:`ConfigurationLoader`.
+            config_path: Optional explicit path passed through to the loader.
+
+        Returns:
+            A ready-to-use :class:`CommitLinter`.
+        """
         if parser is None:
             parser = CommitParserFactory.create()
 

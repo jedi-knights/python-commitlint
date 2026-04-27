@@ -1,15 +1,25 @@
+"""Command-line entry point for python-commitlint.
+
+Defines the ``commitlint`` Click group with two subcommands:
+
+- ``lint`` — validate a commit message against the configured rules
+- ``convert`` — translate a ``commitlint.config.js`` to ``.commitlintrc.yaml``
+"""
+
+import json
 import sys
 from pathlib import Path
 
 import click
 
 from python_commitlint.config.converter import convert_js_to_yaml
+from python_commitlint.core.models import LintResult, ValidationError
 from python_commitlint.linter import CommitLinterFactory
 
 
 @click.group(name="commitlint")
 def commitlint() -> None:
-    pass
+    """python-commitlint command-line interface."""
 
 
 @commitlint.command(name="lint")
@@ -27,6 +37,7 @@ def commitlint() -> None:
 )
 @click.option(
     "--format",
+    "output_format",
     type=click.Choice(["text", "json"]),
     default="text",
     help="Output format",
@@ -41,21 +52,24 @@ def lint_command(
     message: str | None,
     config: str | None,
     stdin: bool,
-    format: str,
+    output_format: str,
     quiet: bool,
 ) -> None:
+    """Validate a commit message and exit non-zero on failure.
+
+    The message can be supplied as a positional argument or read from
+    stdin via ``--stdin`` (typical git ``commit-msg`` hook usage).
+    """
     commit_message = _get_commit_message(message, stdin)
 
     if not commit_message:
         click.echo("Error: No commit message provided", err=True)
         sys.exit(1)
 
-    assert commit_message is not None
-
     linter = CommitLinterFactory.create(config_path=config)
     result = linter.lint(commit_message)
 
-    if format == "json":
+    if output_format == "json":
         _print_json_output(result)
     else:
         _print_text_output(result, quiet)
@@ -84,6 +98,11 @@ def convert_command(
     output: Path | None,
     dry_run: bool,
 ) -> None:
+    """Convert a ``commitlint.config.js`` file to ``.commitlintrc.yaml``.
+
+    With ``--dry-run`` the YAML is written to stdout; otherwise it is
+    written to ``--output`` (or ``.commitlintrc.yaml`` by default).
+    """
     if output is None and not dry_run:
         output = Path(".commitlintrc.yaml")
 
@@ -100,9 +119,14 @@ def convert_command(
                     bold=True,
                 )
             )
-    except Exception as e:
+    except (OSError, ValueError) as e:
+        # Catch the user-facing failure modes (file I/O, decode/encode
+        # errors) and let any other exception propagate as a real
+        # traceback — those would indicate an internal bug.
         click.echo(
-            click.style(f"Error converting file: {e}", fg="red"),
+            click.style(
+                f"Error converting file ({type(e).__name__}): {e}", fg="red"
+            ),
             err=True,
         )
         sys.exit(1)
@@ -110,22 +134,20 @@ def convert_command(
 
 def _get_commit_message(message: str | None, stdin: bool) -> str | None:
     if stdin:
+        # An empty stdin returns "" — falsy, so the caller treats it as
+        # "no message provided" and exits with an error.
         return sys.stdin.read().strip()
     return message
 
 
-def _print_text_output(result: object, quiet: bool) -> None:
-    from python_commitlint.core.models import LintResult
-
-    if not isinstance(result, LintResult):
-        return
+def _print_text_output(result: LintResult, quiet: bool) -> None:
     _print_error_lines(result.errors)
     if not quiet:
         _print_warning_lines(result.warnings)
     _print_status_summary(result, quiet)
 
 
-def _print_error_lines(errors: list) -> None:
+def _print_error_lines(errors: list[ValidationError]) -> None:
     for error in errors:
         click.echo(
             f"{click.style('x', fg='red')}   "
@@ -134,7 +156,7 @@ def _print_error_lines(errors: list) -> None:
         )
 
 
-def _print_warning_lines(warnings: list) -> None:
+def _print_warning_lines(warnings: list[ValidationError]) -> None:
     for warning in warnings:
         click.echo(
             f"{click.style('!', fg='yellow')}   "
@@ -143,11 +165,7 @@ def _print_warning_lines(warnings: list) -> None:
         )
 
 
-def _print_status_summary(result: object, quiet: bool) -> None:
-    from python_commitlint.core.models import LintResult
-
-    if not isinstance(result, LintResult):
-        return
+def _print_status_summary(result: LintResult, quiet: bool) -> None:
     if result.has_errors:
         _print_error_count(result)
         return
@@ -157,11 +175,7 @@ def _print_status_summary(result: object, quiet: bool) -> None:
         )
 
 
-def _print_error_count(result: object) -> None:
-    from python_commitlint.core.models import LintResult
-
-    if not isinstance(result, LintResult):
-        return
+def _print_error_count(result: LintResult) -> None:
     warning_count = len(result.warnings)
     summary = f"{len(result.errors)} error(s)"
     if warning_count > 0:
@@ -169,14 +183,7 @@ def _print_error_count(result: object) -> None:
     click.echo(f"\n{click.style('x', fg='red')} {summary} found")
 
 
-def _print_json_output(result: object) -> None:
-    import json
-
-    from python_commitlint.core.models import LintResult
-
-    if not isinstance(result, LintResult):
-        return
-
+def _print_json_output(result: LintResult) -> None:
     output = {
         "valid": result.valid,
         "errors": [

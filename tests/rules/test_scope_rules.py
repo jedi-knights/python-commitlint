@@ -18,6 +18,7 @@ def _commit(scope: str = "api") -> CommitMessage:
         type="feat",
         scope=scope,
         subject="subject",
+        is_conventional=True,
     )
 
 
@@ -27,6 +28,7 @@ def _commit_no_scope() -> CommitMessage:
         header="feat: subject",
         type="feat",
         subject="subject",
+        is_conventional=True,
     )
 
 

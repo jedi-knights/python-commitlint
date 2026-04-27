@@ -28,3 +28,6 @@ uv.lock.bak
 
 # Local tool binaries
 .tools/
+
+# Working notes
+TODO.md

@@ -1,3 +1,7 @@
+"""Rules that validate the body — the paragraphs between header and footer."""
+
+import re
+
 from python_commitlint.core.enums import CaseType, RuleCondition
 from python_commitlint.core.models import (
     CommitMessage,
@@ -7,8 +11,14 @@ from python_commitlint.core.models import (
 from python_commitlint.rules.base import BaseRule
 from python_commitlint.rules.case_validators import CaseValidator
 
+# A line that consists entirely of a URL (with optional surrounding whitespace)
+# is exempt from body-max-line-length, matching upstream commitlint.
+_URL_ONLY_LINE = re.compile(r"^\s*https?://\S+\s*$")
+
 
 class BodyEmptyRule(BaseRule):
+    """Require or forbid an empty body. Rule name: ``body-empty``."""
+
     @property
     def name(self) -> str:
         return "body-empty"
@@ -30,6 +40,8 @@ class BodyEmptyRule(BaseRule):
 
 
 class BodyLeadingBlankRule(BaseRule):
+    """Require a blank line between header and body. Rule name: ``body-leading-blank``."""
+
     @property
     def name(self) -> str:
         return "body-leading-blank"
@@ -58,6 +70,8 @@ class BodyLeadingBlankRule(BaseRule):
 
 
 class BodyMaxLengthRule(BaseRule):
+    """Enforce a maximum total body length. Rule name: ``body-max-length``."""
+
     @property
     def name(self) -> str:
         return "body-max-length"
@@ -68,7 +82,7 @@ class BodyMaxLengthRule(BaseRule):
         if not commit.body:
             return None
 
-        max_length = config.value or float("inf")
+        max_length = config.value if config.value is not None else float("inf")
         is_valid = len(commit.body) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -80,6 +94,11 @@ class BodyMaxLengthRule(BaseRule):
 
 
 class BodyMaxLineLengthRule(BaseRule):
+    """Enforce a per-line body length limit. Rule name: ``body-max-line-length``.
+
+    Lines that consist entirely of a URL are exempt to match upstream commitlint.
+    """
+
     @property
     def name(self) -> str:
         return "body-max-line-length"
@@ -90,23 +109,27 @@ class BodyMaxLineLengthRule(BaseRule):
         if not commit.body:
             return None
 
-        max_length = config.value or float("inf")
-        lines = commit.body.split("\n")
+        # Only the ALWAYS polarity is meaningful for a max-line-length
+        # rule — "lines must NEVER be at most N characters" is nonsensical,
+        # so under NEVER this rule is a no-op.
+        if config.condition != RuleCondition.ALWAYS:
+            return None
 
-        for line in lines:
-            if "http://" in line or "https://" in line:
+        max_length = config.value if config.value is not None else float("inf")
+        for line in commit.body.split("\n"):
+            if _URL_ONLY_LINE.match(line):
                 continue
             if len(line) > max_length:
-                should_be_valid = config.condition == RuleCondition.ALWAYS
-                if should_be_valid:
-                    return self._create_error(
-                        config,
-                        f"body lines must be at most {max_length} characters",
-                    )
+                return self._create_error(
+                    config,
+                    f"body lines must be at most {max_length} characters",
+                )
         return None
 
 
 class BodyMinLengthRule(BaseRule):
+    """Enforce a minimum total body length. Rule name: ``body-min-length``."""
+
     @property
     def name(self) -> str:
         return "body-min-length"
@@ -117,7 +140,7 @@ class BodyMinLengthRule(BaseRule):
         if not commit.body:
             return None
 
-        min_length = config.value or 0
+        min_length = config.value if config.value is not None else 0
         is_valid = len(commit.body) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -129,6 +152,8 @@ class BodyMinLengthRule(BaseRule):
 
 
 class BodyFullStopRule(BaseRule):
+    """Require or forbid a trailing punctuation character. Rule name: ``body-full-stop``."""
+
     @property
     def name(self) -> str:
         return "body-full-stop"
@@ -139,7 +164,7 @@ class BodyFullStopRule(BaseRule):
         if not commit.body:
             return None
 
-        stop_char = config.value or "."
+        stop_char = config.value if config.value is not None else "."
         ends_with_stop = commit.body.rstrip().endswith(stop_char)
         should_end_with_stop = config.condition == RuleCondition.ALWAYS
 
@@ -154,6 +179,8 @@ class BodyFullStopRule(BaseRule):
 
 
 class BodyCaseRule(BaseRule):
+    """Enforce a case style on the body text. Rule name: ``body-case``."""
+
     @property
     def name(self) -> str:
         return "body-case"
@@ -161,7 +188,7 @@ class BodyCaseRule(BaseRule):
     def validate(
         self, commit: CommitMessage, config: RuleConfig
     ) -> ValidationError | None:
-        if not commit.body:
+        if not commit.body or config.value is None:
             return None
 
         case_types = (

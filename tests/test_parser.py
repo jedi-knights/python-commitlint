@@ -47,6 +47,28 @@ def test_parse_invalid_commit(parser: ConventionalCommitParser) -> None:
     assert result.type == ""
     assert result.subject == ""
     assert result.header == "not a conventional commit"
+    assert result.is_conventional is False
+
+
+def test_parse_conventional_commit_sets_is_conventional(
+    parser: ConventionalCommitParser,
+) -> None:
+    result = parser.parse("feat: add new feature")
+    assert result.is_conventional is True
+
+
+def test_parse_empty_message_is_not_conventional(
+    parser: ConventionalCommitParser,
+) -> None:
+    result = parser.parse("")
+    assert result.is_conventional is False
+
+
+def test_parse_merge_commit_is_not_conventional(
+    parser: ConventionalCommitParser,
+) -> None:
+    result = parser.parse("Merge branch 'main' into feature/x")
+    assert result.is_conventional is False
 
 
 def test_parse_breaking_change_via_exclamation(

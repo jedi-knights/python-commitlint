@@ -1,11 +1,38 @@
+"""Convert legacy ``commitlint.config.js`` files to ``.commitlintrc.yaml``.
+
+The conversion is regex-based — JavaScript is parsed only well enough to
+extract the ``extends`` and ``rules`` blocks. Inputs that rely on advanced
+JS features (template literals, computed keys, comments inside rules) may
+not round-trip cleanly.
+"""
+
 import re
+from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from ruamel.yaml import YAML
 
 
+class _StringState(NamedTuple):
+    in_string: bool
+    string_char: str | None
+    skip: bool
+
+
+class _CharResult(NamedTuple):
+    handled: bool
+    depth: int
+    current: str
+
+
 class CommitlintConfigConverter:
+    """Translates a ``commitlint.config.js`` source string to YAML.
+
+    Use :meth:`js_to_yaml` for in-memory conversion or the module-level
+    :func:`convert_js_to_yaml` for the file-based variant.
+    """
+
     SEVERITY_MAP = {
         0: "disabled",
         1: "warning",
@@ -19,6 +46,15 @@ class CommitlintConfigConverter:
     }
 
     def js_to_yaml(self, js_content: str) -> str:
+        """Convert JavaScript config text to YAML text.
+
+        Args:
+            js_content: The contents of a ``commitlint.config.js`` file.
+
+        Returns:
+            A YAML document equivalent to the parsed ``extends`` and
+            ``rules`` declarations.
+        """
         config = self._parse_js_config(js_content)
         return self._generate_yaml(config)
 
@@ -49,8 +85,13 @@ class CommitlintConfigConverter:
     def _parse_rules(self, rules_str: str) -> dict[str, Any]:
         rules: dict[str, Any] = {}
 
+        # The bracketed alternative supports one level of nesting so rules
+        # like `'scope-enum': [2, 'always', ['api', 'ui']]` parse correctly.
+        # A naive lazy `\[.*?\]` would terminate at the first `]` and drop
+        # the inner array.
         rule_pattern = (
-            r"(['\"]?)(\w+(?:-\w+)*)\1\s*:\s*(\[.*?\]|\d+|['\"][^'\"]*['\"])"
+            r"(['\"]?)(\w+(?:-\w+)*)\1\s*:\s*"
+            r"(\[(?:[^\[\]]|\[[^\[\]]*\])*\]|\d+|['\"][^'\"]*['\"])"
         )
         matches = re.finditer(rule_pattern, rules_str, re.DOTALL)
 
@@ -78,24 +119,22 @@ class CommitlintConfigConverter:
         current = ""
         depth = 0
         in_string = False
-        string_char = None
+        string_char: str | None = None
 
         for char in array_str:
-            in_string, string_char = self._handle_string_state(
-                char, in_string, string_char
-            )
-            if string_char == "skip":
+            state = self._handle_string_state(char, in_string, string_char)
+            in_string, string_char = state.in_string, state.string_char
+            if state.skip:
                 continue
 
             if not in_string:
-                should_continue = self._handle_special_chars(
+                char_result = self._handle_special_chars(
                     char, depth, current, result
                 )
-                if should_continue[0]:
-                    depth = should_continue[1]
-                    current = should_continue[2]
+                depth = char_result.depth
+                if char_result.handled:
+                    current = char_result.current
                     continue
-                depth = should_continue[1]
 
             current += char
 
@@ -106,26 +145,28 @@ class CommitlintConfigConverter:
 
     def _handle_string_state(
         self, char: str, in_string: bool, string_char: str | None
-    ) -> tuple[bool, str | None]:
+    ) -> _StringState:
         if char in ("'", '"') and not in_string:
-            return True, "skip"
+            return _StringState(in_string=True, string_char=char, skip=True)
         if char == string_char and in_string:
-            return False, "skip"
-        return in_string, string_char
+            return _StringState(in_string=False, string_char=None, skip=True)
+        return _StringState(
+            in_string=in_string, string_char=string_char, skip=False
+        )
 
     def _handle_special_chars(
         self, char: str, depth: int, current: str, result: list[Any]
-    ) -> tuple[bool, int, str]:
+    ) -> _CharResult:
         if char == "[":
-            return False, depth + 1, current
+            return _CharResult(handled=False, depth=depth + 1, current=current)
         if char == "]":
-            return False, depth - 1, current
+            return _CharResult(handled=False, depth=depth - 1, current=current)
         if char == "," and depth == 0:
             value = current.strip()
             if value:
                 result.append(self._parse_value(value))
-            return True, depth, ""
-        return False, depth, current
+            return _CharResult(handled=True, depth=depth, current="")
+        return _CharResult(handled=False, depth=depth, current=current)
 
     def _parse_value(self, value: str) -> Any:
         value = value.strip()
@@ -162,8 +203,6 @@ class CommitlintConfigConverter:
         yaml.allow_unicode = True
         yaml.width = 80
 
-        from io import StringIO
-
         stream = StringIO()
         yaml.dump(yaml_config, stream)
         return stream.getvalue()
@@ -172,15 +211,26 @@ class CommitlintConfigConverter:
 def convert_js_to_yaml(
     input_path: Path, output_path: Path | None = None
 ) -> str:
+    """Convert a JS config file to YAML, optionally writing the result.
+
+    Args:
+        input_path: Path to the source ``commitlint.config.js``.
+        output_path: Optional destination path. When provided, the
+            converted YAML is written there.
+
+    Returns:
+        The YAML content as a string regardless of whether ``output_path``
+        was supplied.
+    """
     converter = CommitlintConfigConverter()
 
-    with open(input_path) as f:
+    with input_path.open() as f:
         js_content = f.read()
 
     yaml_content = converter.js_to_yaml(js_content)
 
     if output_path:
-        with open(output_path, "w") as f:
+        with output_path.open("w") as f:
             f.write(yaml_content)
 
     return yaml_content

@@ -17,6 +17,7 @@ def _commit(type: str = "feat") -> CommitMessage:
         header=f"{type}: subject",
         type=type,
         subject="subject",
+        is_conventional=True,
     )
 
 
