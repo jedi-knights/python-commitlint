@@ -33,7 +33,7 @@ jobs:
         run: uv sync --extra dev
 
       - name: Run tests with coverage
-        run: uv run pytest --cov=python_commitlint --cov-report=xml
+        run: uv run pytest --cov --cov-report=xml
 
       - name: Update coverage badge
         uses: jedi-knights/coverage-badge@v0

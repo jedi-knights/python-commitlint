@@ -1,3 +1,5 @@
+"""Rules that validate the entire header line (``type(scope): subject``)."""
+
 from python_commitlint.core.enums import CaseType, RuleCondition
 from python_commitlint.core.models import (
     CommitMessage,
@@ -9,6 +11,8 @@ from python_commitlint.rules.case_validators import CaseValidator
 
 
 class HeaderMaxLengthRule(BaseRule):
+    """Enforce a maximum header length. Rule name: ``header-max-length``."""
+
     @property
     def name(self) -> str:
         return "header-max-length"
@@ -16,7 +20,7 @@ class HeaderMaxLengthRule(BaseRule):
     def validate(
         self, commit: CommitMessage, config: RuleConfig
     ) -> ValidationError | None:
-        max_length = config.value or float("inf")
+        max_length = config.value if config.value is not None else float("inf")
         is_valid = len(commit.header) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -28,6 +32,8 @@ class HeaderMaxLengthRule(BaseRule):
 
 
 class HeaderMinLengthRule(BaseRule):
+    """Enforce a minimum header length. Rule name: ``header-min-length``."""
+
     @property
     def name(self) -> str:
         return "header-min-length"
@@ -35,7 +41,7 @@ class HeaderMinLengthRule(BaseRule):
     def validate(
         self, commit: CommitMessage, config: RuleConfig
     ) -> ValidationError | None:
-        min_length = config.value or 0
+        min_length = config.value if config.value is not None else 0
         is_valid = len(commit.header) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -47,6 +53,8 @@ class HeaderMinLengthRule(BaseRule):
 
 
 class HeaderTrimRule(BaseRule):
+    """Forbid leading or trailing whitespace on the header. Rule name: ``header-trim``."""
+
     @property
     def name(self) -> str:
         return "header-trim"
@@ -65,6 +73,8 @@ class HeaderTrimRule(BaseRule):
 
 
 class HeaderFullStopRule(BaseRule):
+    """Require or forbid a trailing punctuation character. Rule name: ``header-full-stop``."""
+
     @property
     def name(self) -> str:
         return "header-full-stop"
@@ -75,7 +85,7 @@ class HeaderFullStopRule(BaseRule):
         if not commit.header:
             return None
 
-        stop_char = config.value or "."
+        stop_char = config.value if config.value is not None else "."
         ends_with_stop = commit.header.endswith(stop_char)
         should_end_with_stop = config.condition == RuleCondition.ALWAYS
 
@@ -90,6 +100,8 @@ class HeaderFullStopRule(BaseRule):
 
 
 class HeaderCaseRule(BaseRule):
+    """Enforce a case style on the full header. Rule name: ``header-case``."""
+
     @property
     def name(self) -> str:
         return "header-case"
@@ -97,7 +109,7 @@ class HeaderCaseRule(BaseRule):
     def validate(
         self, commit: CommitMessage, config: RuleConfig
     ) -> ValidationError | None:
-        if not commit.header:
+        if not commit.header or config.value is None:
             return None
 
         case_types = (

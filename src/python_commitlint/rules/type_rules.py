@@ -1,3 +1,5 @@
+"""Rules that validate the commit ``type`` (the token before the colon)."""
+
 from python_commitlint.core.enums import CaseType, RuleCondition
 from python_commitlint.core.models import (
     CommitMessage,
@@ -9,6 +11,8 @@ from python_commitlint.rules.case_validators import CaseValidator
 
 
 class TypeEmptyRule(BaseRule):
+    """Require or forbid an empty type. Rule name: ``type-empty``."""
+
     @property
     def name(self) -> str:
         return "type-empty"
@@ -30,6 +34,8 @@ class TypeEmptyRule(BaseRule):
 
 
 class TypeCaseRule(BaseRule):
+    """Enforce a single case style on the type. Rule name: ``type-case``."""
+
     @property
     def name(self) -> str:
         return "type-case"
@@ -37,7 +43,7 @@ class TypeCaseRule(BaseRule):
     def validate(
         self, commit: CommitMessage, config: RuleConfig
     ) -> ValidationError | None:
-        if not commit.type:
+        if not commit.type or config.value is None:
             return None
 
         case_type = CaseType(config.value)
@@ -50,6 +56,8 @@ class TypeCaseRule(BaseRule):
 
 
 class TypeEnumRule(BaseRule):
+    """Restrict the type to (or away from) an allowed list. Rule name: ``type-enum``."""
+
     @property
     def name(self) -> str:
         return "type-enum"
@@ -75,6 +83,8 @@ class TypeEnumRule(BaseRule):
 
 
 class TypeMinLengthRule(BaseRule):
+    """Enforce a minimum character length on the type. Rule name: ``type-min-length``."""
+
     @property
     def name(self) -> str:
         return "type-min-length"
@@ -85,7 +95,7 @@ class TypeMinLengthRule(BaseRule):
         if not commit.type:
             return None
 
-        min_length = config.value or 0
+        min_length = config.value if config.value is not None else 0
         is_valid = len(commit.type) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -97,6 +107,8 @@ class TypeMinLengthRule(BaseRule):
 
 
 class TypeMaxLengthRule(BaseRule):
+    """Enforce a maximum character length on the type. Rule name: ``type-max-length``."""
+
     @property
     def name(self) -> str:
         return "type-max-length"
@@ -107,7 +119,7 @@ class TypeMaxLengthRule(BaseRule):
         if not commit.type:
             return None
 
-        max_length = config.value or float("inf")
+        max_length = config.value if config.value is not None else float("inf")
         is_valid = len(commit.type) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 

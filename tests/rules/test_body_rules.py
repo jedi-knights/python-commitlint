@@ -21,6 +21,7 @@ def _commit(body: str = "", raw: str = "") -> CommitMessage:
         type="feat",
         subject="subject",
         body=body,
+        is_conventional=True,
     )
 
 
@@ -171,15 +172,24 @@ def test_body_max_line_length_rule_fails_on_long_line() -> None:
     assert "100" in result.message
 
 
-def test_body_max_line_length_rule_skips_url_lines() -> None:
+def test_body_max_line_length_rule_skips_url_only_lines() -> None:
     rule = BodyMaxLineLengthRule()
-    url_line = "See https://example.com/" + "x" * 200
+    url_line = "https://example.com/" + "x" * 200
     assert (
         rule.validate(
             _commit(url_line), _config(RuleCondition.ALWAYS, value=80)
         )
         is None
     )
+
+
+def test_body_max_line_length_rule_does_not_skip_url_in_prose() -> None:
+    rule = BodyMaxLineLengthRule()
+    line = "See https://example.com/" + "x" * 200
+    result = rule.validate(
+        _commit(line), _config(RuleCondition.ALWAYS, value=80)
+    )
+    assert result is not None
 
 
 def test_body_max_line_length_rule_skips_empty_body() -> None:

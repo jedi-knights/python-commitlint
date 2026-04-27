@@ -20,6 +20,7 @@ def _commit(footer: str = "", raw: str = "") -> CommitMessage:
         type="feat",
         subject="subject",
         footer=footer,
+        is_conventional=True,
     )
 
 

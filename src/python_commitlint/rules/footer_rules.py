@@ -1,3 +1,7 @@
+"""Rules that validate the footer block (BREAKING CHANGE, ``token: value``)."""
+
+import re
+
 from python_commitlint.core.enums import RuleCondition
 from python_commitlint.core.models import (
     CommitMessage,
@@ -6,8 +10,20 @@ from python_commitlint.core.models import (
 )
 from python_commitlint.rules.base import BaseRule
 
+_FOOTER_TOKEN_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"^BREAKING[- ]CHANGE:"),
+    re.compile(r"^[\w-]+:\s+"),
+    re.compile(r"^[\w-]+\s+#\d+"),
+)
+
+
+def _is_footer_token_line(line: str) -> bool:
+    return any(pattern.match(line) for pattern in _FOOTER_TOKEN_PATTERNS)
+
 
 class FooterEmptyRule(BaseRule):
+    """Require or forbid an empty footer. Rule name: ``footer-empty``."""
+
     @property
     def name(self) -> str:
         return "footer-empty"
@@ -29,6 +45,8 @@ class FooterEmptyRule(BaseRule):
 
 
 class FooterLeadingBlankRule(BaseRule):
+    """Require a blank line before the footer. Rule name: ``footer-leading-blank``."""
+
     @property
     def name(self) -> str:
         return "footer-leading-blank"
@@ -56,16 +74,18 @@ class FooterLeadingBlankRule(BaseRule):
         return None
 
     def _find_footer_start(self, lines: list[str]) -> int:
-        for i, line in enumerate(lines):
-            if line and any(
-                line.startswith(prefix)
-                for prefix in ["BREAKING CHANGE:", "BREAKING-CHANGE:"]
-            ):
+        # Skip line 0 (the header) — its `type: subject` shape would
+        # otherwise be mistaken for a footer token.
+        for i in range(1, len(lines)):
+            line = lines[i]
+            if line and _is_footer_token_line(line):
                 return i
         return -1
 
 
 class FooterMaxLengthRule(BaseRule):
+    """Enforce a maximum total footer length. Rule name: ``footer-max-length``."""
+
     @property
     def name(self) -> str:
         return "footer-max-length"
@@ -76,7 +96,7 @@ class FooterMaxLengthRule(BaseRule):
         if not commit.footer:
             return None
 
-        max_length = config.value or float("inf")
+        max_length = config.value if config.value is not None else float("inf")
         is_valid = len(commit.footer) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -88,6 +108,8 @@ class FooterMaxLengthRule(BaseRule):
 
 
 class FooterMaxLineLengthRule(BaseRule):
+    """Enforce a per-line footer length limit. Rule name: ``footer-max-line-length``."""
+
     @property
     def name(self) -> str:
         return "footer-max-line-length"
@@ -98,21 +120,25 @@ class FooterMaxLineLengthRule(BaseRule):
         if not commit.footer:
             return None
 
-        max_length = config.value or float("inf")
-        lines = commit.footer.split("\n")
+        # Only the ALWAYS polarity is meaningful for a max-line-length
+        # rule — "lines must NEVER be at most N characters" is nonsensical,
+        # so under NEVER this rule is a no-op.
+        if config.condition != RuleCondition.ALWAYS:
+            return None
 
-        for line in lines:
+        max_length = config.value if config.value is not None else float("inf")
+        for line in commit.footer.split("\n"):
             if len(line) > max_length:
-                should_be_valid = config.condition == RuleCondition.ALWAYS
-                if should_be_valid:
-                    return self._create_error(
-                        config,
-                        f"footer lines must be at most {max_length} characters",
-                    )
+                return self._create_error(
+                    config,
+                    f"footer lines must be at most {max_length} characters",
+                )
         return None
 
 
 class FooterMinLengthRule(BaseRule):
+    """Enforce a minimum total footer length. Rule name: ``footer-min-length``."""
+
     @property
     def name(self) -> str:
         return "footer-min-length"
@@ -123,7 +149,7 @@ class FooterMinLengthRule(BaseRule):
         if not commit.footer:
             return None
 
-        min_length = config.value or 0
+        min_length = config.value if config.value is not None else 0
         is_valid = len(commit.footer) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 

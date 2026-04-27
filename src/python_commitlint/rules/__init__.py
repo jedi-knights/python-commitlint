@@ -1,3 +1,10 @@
+"""Built-in commitlint rules — type, scope, subject, header, body, footer.
+
+Each rule implements :class:`~python_commitlint.core.protocols.RuleProtocol`
+and is registered with a :class:`~python_commitlint.rules.registry.RuleRegistry`
+so the linter can dispatch by rule name.
+"""
+
 from python_commitlint.rules.body_rules import (
     BodyCaseRule,
     BodyEmptyRule,

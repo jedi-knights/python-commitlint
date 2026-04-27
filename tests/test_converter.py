@@ -102,3 +102,20 @@ def test_converter_severity_map_values() -> None:
     assert CommitlintConfigConverter.SEVERITY_MAP[0] == "disabled"
     assert CommitlintConfigConverter.SEVERITY_MAP[1] == "warning"
     assert CommitlintConfigConverter.SEVERITY_MAP[2] == "error"
+
+
+def test_converter_preserves_nested_array_values() -> None:
+    js = """
+    module.exports = {
+      rules: {
+        'type-enum': [2, 'always', ['feat', 'fix', 'docs']],
+      }
+    }
+    """
+    converter = CommitlintConfigConverter()
+    parsed = converter._parse_js_config(js)
+    assert parsed["rules"]["type-enum"] == [
+        2,
+        "always",
+        ["feat", "fix", "docs"],
+    ]

@@ -1,9 +1,18 @@
+"""Core domain layer — enums, dataclasses, protocols, and exceptions.
+
+This subpackage holds the framework-free building blocks used throughout
+python-commitlint: shared enumerations, validated value objects, structural
+Protocol contracts for adapters, and the :class:`ConfigurationError` raised
+at the configuration boundary.
+"""
+
 from python_commitlint.core.enums import (
     CaseType,
     CommitType,
     RuleCondition,
     Severity,
 )
+from python_commitlint.core.exceptions import ConfigurationError
 from python_commitlint.core.models import (
     CaseValidation,
     CommitMessage,
@@ -28,6 +37,7 @@ __all__ = [
     "CommitParserProtocol",
     "CommitType",
     "Configuration",
+    "ConfigurationError",
     "ConfigurationLoaderProtocol",
     "LintResult",
     "RuleCondition",

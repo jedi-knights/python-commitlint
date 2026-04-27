@@ -305,7 +305,7 @@ uv sync --extra dev
 uv run pytest
 
 # Run tests with coverage
-uv run pytest --cov=python_commitlint --cov-report=term-missing
+uv run pytest --cov --cov-report=term-missing
 
 # Lint
 uv run ruff check .

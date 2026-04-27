@@ -12,7 +12,7 @@ from python_commitlint.rules.header_rules import (
 
 
 def _commit(header: str) -> CommitMessage:
-    return CommitMessage(raw=header, header=header)
+    return CommitMessage(raw=header, header=header, is_conventional=True)
 
 
 def _config(

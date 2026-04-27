@@ -1,7 +1,10 @@
 from pathlib import Path
 
+import pytest
+
 from python_commitlint.config.configuration import ConfigurationLoader
 from python_commitlint.core.enums import RuleCondition, Severity
+from python_commitlint.core.exceptions import ConfigurationError
 
 
 def test_load_default_config_when_no_file_exists(tmp_path: Path) -> None:
@@ -96,3 +99,21 @@ rules:
     config = loader.load(str(config_file))
 
     assert config.rules["type-enum"].severity == Severity.DISABLED
+
+
+def test_unknown_extends_preset_raises(tmp_path: Path) -> None:
+    config_file = tmp_path / ".commitlintrc.yaml"
+    config_file.write_text("extends: commitlint-config-angular\nrules: {}\n")
+
+    loader = ConfigurationLoader()
+    with pytest.raises(ConfigurationError, match="unknown preset"):
+        loader.load(str(config_file))
+
+
+def test_empty_list_rule_raises(tmp_path: Path) -> None:
+    config_file = tmp_path / ".commitlintrc.yaml"
+    config_file.write_text("rules:\n  type-enum: []\n")
+
+    loader = ConfigurationLoader()
+    with pytest.raises(ConfigurationError, match="must not be empty"):
+        loader.load(str(config_file))

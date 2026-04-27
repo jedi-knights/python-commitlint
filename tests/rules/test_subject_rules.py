@@ -17,6 +17,7 @@ def _commit(subject: str = "add new feature") -> CommitMessage:
         header=f"feat: {subject}",
         type="feat",
         subject=subject,
+        is_conventional=True,
     )
 
 

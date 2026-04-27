@@ -10,7 +10,6 @@ from invoke.context import Context
 from invoke.tasks import task
 
 ROOT = Path(__file__).resolve().parent
-PACKAGE = "python_commitlint"
 
 SEMANTIC_RELEASE_VERSION = "v0.10.2"
 TOOLS_DIR = ROOT / ".tools"
@@ -113,7 +112,7 @@ def test(c: Context, cov: bool = True, xml: bool = False) -> None:
     """Run the test suite (use --xml to also emit coverage.xml)."""
     cmd = "uv run pytest"
     if cov:
-        cmd += f" --cov={PACKAGE} --cov-report=term-missing"
+        cmd += " --cov --cov-report=term-missing"
         if xml:
             cmd += " --cov-report=xml"
     c.run(cmd, pty=True)
