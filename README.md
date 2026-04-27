@@ -5,7 +5,7 @@ A pure-Python implementation of [commitlint](https://commitlint.js.org/) for val
 [![Python](https://img.shields.io/badge/python-3.13%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-![Coverage](https://img.shields.io/badge/Coverage-0.0%25-lightgrey)
+![Coverage](https://img.shields.io/badge/Coverage-96.0%25-brightgreen)
 
 ---
 
