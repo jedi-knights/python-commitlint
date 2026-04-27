@@ -39,7 +39,7 @@ Homepage = "https://github.com/jedi-knights/python-commitlint"
 Issues = "https://github.com/jedi-knights/python-commitlint/issues"
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest", "pytest-cov", "pytest-mock", "python-semantic-release", "twine"]
+dev = ["ruff", "pytest", "pytest-cov", "pytest-mock", "invoke"]
 
 [tool.ruff]
 line-length = 80
@@ -63,20 +63,3 @@ line-ending = "auto"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-[tool.semantic_release]
-version_toml = ["pyproject.toml:project.version"]
-tag_format = "v{version}"
-build_command = "echo $NEW_VERSION > VERSION && uv build"
-
-[tool.semantic_release.branches.main]
-match = "main"
-prerelease = false
-
-[tool.semantic_release.remote]
-name = "origin"
-type = "github"
-
-[tool.semantic_release.publish]
-dist_glob_patterns = ["dist/*"]
-upload_to_vcs_release = true

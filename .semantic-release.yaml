@@ -1,0 +1,17 @@
+release_mode: repo
+tag_format: "v{{.Version}}"
+
+branches:
+  - name: main
+    is_default: true
+
+prepare:
+  changelog_file: CHANGELOG.md
+  version_file: VERSION
+  version_files:
+    - pyproject.toml:project.version
+
+assets:
+  - CHANGELOG.md
+  - VERSION
+  - pyproject.toml
