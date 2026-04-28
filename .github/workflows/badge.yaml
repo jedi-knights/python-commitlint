@@ -1,9 +1,10 @@
 name: Coverage Badge
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -12,6 +13,12 @@ permissions:
 jobs:
   badge:
     name: Update Coverage Badge
+    # Only run when the triggering Release workflow succeeded, or when
+    # invoked manually. A failed release leaves the repo in a partial
+    # state (e.g. tag pushed but no GitHub Release created); refreshing
+    # the badge before that's resolved would advertise stale or
+    # inconsistent coverage.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
