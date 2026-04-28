@@ -305,6 +305,58 @@ chmod +x .git/hooks/commit-msg
 
 ### GitHub Actions
 
+This repository ships its own composite action — no separate install step required.
+
+**Validate a pull request title:**
+
+```yaml
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  lint-pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jedi-knights/python-commitlint@v0
+        with:
+          message: ${{ github.event.pull_request.title }}
+```
+
+**Validate the latest commit on a push:**
+
+```yaml
+on: push
+
+jobs:
+  lint-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jedi-knights/python-commitlint@v0
+```
+
+Inputs:
+
+| Name | Description | Default |
+|---|---|---|
+| `message` | Commit message to validate. If omitted, the last commit on `HEAD` is used. | `""` |
+| `config-path` | Path to a `.commitlintrc.yaml` file. | `""` |
+| `format` | Output format printed to the workflow log: `text` or `json`. | `text` |
+| `fail-on-warnings` | Exit non-zero when warnings are present. | `false` |
+| `version` | Version of `python-commitlint` to install from PyPI. `auto` tracks the action ref tag (e.g. `@v1.2.3` → `1.2.3`); falls back to the latest release on PyPI for branch refs. | `auto` |
+
+Outputs:
+
+| Name | Description |
+|---|---|
+| `valid` | `"true"` if validation passed, otherwise `"false"`. |
+| `result-json` | Full lint result as a JSON document. |
+
+The action assumes Python 3.12+ is available on the runner (true for `ubuntu-latest`). For other runners, run `actions/setup-python` first.
+
+**Or invoke the CLI directly:**
+
 ```yaml
 - name: Validate commit message
   run: git log -1 --pretty=%B | commitlint lint --stdin
