@@ -1,0 +1,122 @@
+name: Python Commitlint by Jedi-Knights
+description: Validate Conventional Commit messages without Node.js. Pure Python.
+author: Jedi-Knights
+
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  message:
+    description: Commit message to validate. If omitted, the last commit on HEAD is used.
+    required: false
+  config-path:
+    description: Path to a .commitlintrc.yaml configuration file.
+    required: false
+  format:
+    description: 'Output format printed to the workflow log: text or json.'
+    required: false
+    default: text
+  fail-on-warnings:
+    description: Exit non-zero when warnings are present.
+    required: false
+    default: 'false'
+  version:
+    description: 'Version of python-commitlint to install from PyPI. "auto" resolves to the action ref tag (vX.Y.Z), falling back to the latest release on PyPI when the ref is not a semver tag.'
+    required: false
+    default: auto
+
+outputs:
+  valid:
+    description: '"true" if the commit message passes validation, otherwise "false".'
+    value: ${{ steps.lint.outputs.valid }}
+  result-json:
+    description: Full lint result as a JSON document.
+    value: ${{ steps.lint.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Verify Python is available
+      shell: bash
+      run: |
+        if ! command -v pip >/dev/null 2>&1; then
+          echo "::error::Python 3.12+ with pip is required. Add actions/setup-python before this step."
+          exit 1
+        fi
+
+    - name: Install python-commitlint
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+      run: |
+        VERSION="$INPUT_VERSION"
+        # When "auto", prefer the action ref tag so the package version
+        # tracks whatever vX.Y.Z the consumer pinned. Falls through to
+        # latest on PyPI when the ref is a branch (e.g. main) or unset.
+        if [ "$VERSION" = "auto" ]; then
+          if [[ "${GITHUB_ACTION_REF:-}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            VERSION="${GITHUB_ACTION_REF#v}"
+          else
+            VERSION=""
+          fi
+        fi
+        if [ -n "$VERSION" ]; then
+          pip install --quiet "python-commitlint==$VERSION"
+        else
+          pip install --quiet python-commitlint
+        fi
+
+    - name: Lint commit message
+      id: lint
+      shell: bash
+      env:
+        INPUT_MESSAGE: ${{ inputs.message }}
+        INPUT_CONFIG_PATH: ${{ inputs.config-path }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_FAIL_ON_WARNINGS: ${{ inputs.fail-on-warnings }}
+      run: |
+        CONFIG_ARGS=()
+        if [ -n "$INPUT_CONFIG_PATH" ]; then
+          CONFIG_ARGS+=(--config "$INPUT_CONFIG_PATH")
+        fi
+
+        # Always run with --format json first to capture structured output
+        # for the action's outputs and exit logic. The CLI exits non-zero
+        # on validation failure, so swallow that here and decide ourselves.
+        if [ -n "$INPUT_MESSAGE" ]; then
+          RESULT=$(commitlint lint --format json "${CONFIG_ARGS[@]}" "$INPUT_MESSAGE" || true)
+        else
+          RESULT=$(git log -1 --pretty=%B | commitlint lint --stdin --format json "${CONFIG_ARGS[@]}" || true)
+        fi
+
+        {
+          echo "result<<RESULT_EOF"
+          echo "$RESULT"
+          echo "RESULT_EOF"
+        } >> "$GITHUB_OUTPUT"
+
+        VALID=$(printf '%s' "$RESULT" | python -c "import json,sys; print('true' if json.load(sys.stdin).get('valid') else 'false')")
+        echo "valid=$VALID" >> "$GITHUB_OUTPUT"
+
+        # Display in the format the user asked for. Re-running the CLI in
+        # text mode is simpler than rendering the JSON ourselves — the CLI
+        # already produces the canonical text representation.
+        if [ "$INPUT_FORMAT" = "json" ]; then
+          printf '%s\n' "$RESULT"
+        elif [ -n "$INPUT_MESSAGE" ]; then
+          commitlint lint "${CONFIG_ARGS[@]}" "$INPUT_MESSAGE" || true
+        else
+          git log -1 --pretty=%B | commitlint lint --stdin "${CONFIG_ARGS[@]}" || true
+        fi
+
+        if [ "$VALID" = "false" ]; then
+          exit 1
+        fi
+        if [ "$INPUT_FAIL_ON_WARNINGS" = "true" ]; then
+          WARNINGS=$(printf '%s' "$RESULT" | python -c "import json,sys; print(len(json.load(sys.stdin).get('warnings', [])))")
+          if [ "$WARNINGS" != "0" ]; then
+            echo "::error::fail-on-warnings is true and $WARNINGS warning(s) were reported"
+            exit 1
+          fi
+        fi
