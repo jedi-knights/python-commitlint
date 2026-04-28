@@ -5,6 +5,15 @@ branches:
   - name: main
     is_default: true
 
+# Owner/repo are mandatory for the GitHub publisher: it builds
+# https://api.github.com/repos/{owner}/{repo}/releases from these fields,
+# and an empty path returns 404 (the 404 surfaces as "release step
+# 'publish': github release failed" in the workflow log).
+github:
+  owner: jedi-knights
+  repo: python-commitlint
+  create_release: true
+
 prepare:
   changelog_file: CHANGELOG.md
   version_file: VERSION
