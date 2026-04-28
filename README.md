@@ -2,10 +2,31 @@
 
 A pure-Python implementation of [commitlint](https://commitlint.js.org/) for validating [Conventional Commits](https://www.conventionalcommits.org/). No Node.js required.
 
+![CI](https://github.com/jedi-knights/python-commitlint/actions/workflows/ci.yaml/badge.svg)
+![Release](https://github.com/jedi-knights/python-commitlint/actions/workflows/release.yaml/badge.svg)
+![Coverage Badge](https://github.com/jedi-knights/python-commitlint/actions/workflows/badge.yaml/badge.svg)
 [![Python](https://img.shields.io/badge/python-3.13%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 ![Coverage](https://img.shields.io/badge/Coverage-95.5%25-brightgreen)
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Built-in Rules](#built-in-rules)
+- [CI/CD Integration](#cicd-integration)
+- [Development](#development)
+- [Valid Commit Examples](#valid-commit-examples)
+- [Invalid Commit Examples](#invalid-commit-examples)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -19,6 +40,14 @@ A pure-Python implementation of [commitlint](https://commitlint.js.org/) for val
 - Stdin support for use as a git commit-msg hook
 - JS config converter (`commitlint.config.js` → `.commitlintrc.yaml`)
 - Zero Node.js dependencies
+
+---
+
+## Requirements
+
+- Python **3.13** or newer
+- [`uv`](https://github.com/astral-sh/uv) (recommended) or `pip` for installation
+- For development: `uv sync --extra dev` installs `ruff`, `pytest`, `pytest-cov`, `pytest-mock`, and `invoke`
 
 ---
 
@@ -338,6 +367,21 @@ feat: subject ending in period.     # trailing period not allowed
 feat:missing space after colon      # malformed header
 just a message                      # missing type and colon
 ```
+
+---
+
+## Contributing
+
+Contributions are welcome. Before opening a pull request:
+
+1. Fork the repo and create a branch from `main`
+2. Run `uv sync --extra dev` to install development dependencies
+3. Write tests for any new behavior — the project follows test-driven development
+4. Ensure `uv run pytest`, `uv run ruff check .`, and `uv run ruff format --check .` all pass
+5. Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages — they're enforced by this very tool, and the release workflow uses them to compute the next version
+6. Open a pull request against `main` with a clear description of the change and its motivation
+
+For bugs and feature requests, file an issue at <https://github.com/jedi-knights/python-commitlint/issues>.
 
 ---
 
