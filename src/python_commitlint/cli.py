@@ -13,6 +13,7 @@ from pathlib import Path
 import click
 
 from python_commitlint.config.converter import convert_js_to_yaml
+from python_commitlint.core.exceptions import ConfigurationError
 from python_commitlint.core.models import LintResult, ValidationError
 from python_commitlint.linter import CommitLinterFactory
 
@@ -27,7 +28,7 @@ def commitlint() -> None:
 @click.option(
     "-c",
     "--config",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help="Path to configuration file (default: .commitlintrc.yaml)",
 )
 @click.option(
@@ -50,7 +51,7 @@ def commitlint() -> None:
 )
 def lint_command(
     message: str | None,
-    config: str | None,
+    config: Path | None,
     stdin: bool,
     output_format: str,
     quiet: bool,
@@ -66,8 +67,12 @@ def lint_command(
         click.echo("Error: No commit message provided", err=True)
         sys.exit(1)
 
-    linter = CommitLinterFactory.create(config_path=config)
-    result = linter.lint(commit_message)
+    try:
+        linter = CommitLinterFactory.create(config_path=config)
+        result = linter.lint(commit_message)
+    except ConfigurationError as e:
+        click.echo(click.style(f"Configuration error: {e}", fg="red"), err=True)
+        sys.exit(1)
 
     if output_format == "json":
         _print_json_output(result)

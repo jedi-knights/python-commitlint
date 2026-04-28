@@ -7,19 +7,15 @@ from python_commitlint.core.enums import RuleCondition, Severity
 from python_commitlint.core.exceptions import ConfigurationError
 
 
-def test_load_default_config_when_no_file_exists(tmp_path: Path) -> None:
-    import os
-
-    original_dir = os.getcwd()
-    os.chdir(tmp_path)
-    try:
-        loader = ConfigurationLoader()
-        config = loader.load()
-        assert "type-enum" in config.rules
-        assert "type-case" in config.rules
-        assert "subject-empty" in config.rules
-    finally:
-        os.chdir(original_dir)
+def test_load_default_config_when_no_file_exists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    loader = ConfigurationLoader()
+    config = loader.load()
+    assert "type-enum" in config.rules
+    assert "type-case" in config.rules
+    assert "subject-empty" in config.rules
 
 
 def test_load_yaml_config_file(tmp_path: Path) -> None:
@@ -36,7 +32,7 @@ rules:
     config_file.write_text(config_content)
 
     loader = ConfigurationLoader()
-    config = loader.load(str(config_file))
+    config = loader.load(config_file)
 
     assert "type-enum" in config.rules
     rule = config.rules["type-enum"]
@@ -59,7 +55,7 @@ rules:
     config_file.write_text(config_content)
 
     loader = ConfigurationLoader()
-    config = loader.load(str(config_file))
+    config = loader.load(config_file)
 
     assert "type-enum" in config.rules
     assert config.rules["header-max-length"].value == 72
@@ -78,7 +74,7 @@ rules:
     config_file.write_text(config_content)
 
     loader = ConfigurationLoader()
-    config = loader.load(str(config_file))
+    config = loader.load(config_file)
 
     rule = config.rules["type-enum"]
     assert rule.severity == Severity.ERROR
@@ -96,7 +92,7 @@ rules:
     config_file.write_text(config_content)
 
     loader = ConfigurationLoader()
-    config = loader.load(str(config_file))
+    config = loader.load(config_file)
 
     assert config.rules["type-enum"].severity == Severity.DISABLED
 
@@ -107,7 +103,7 @@ def test_unknown_extends_preset_raises(tmp_path: Path) -> None:
 
     loader = ConfigurationLoader()
     with pytest.raises(ConfigurationError, match="unknown preset"):
-        loader.load(str(config_file))
+        loader.load(config_file)
 
 
 def test_empty_list_rule_raises(tmp_path: Path) -> None:
@@ -116,4 +112,4 @@ def test_empty_list_rule_raises(tmp_path: Path) -> None:
 
     loader = ConfigurationLoader()
     with pytest.raises(ConfigurationError, match="must not be empty"):
-        loader.load(str(config_file))
+        loader.load(config_file)

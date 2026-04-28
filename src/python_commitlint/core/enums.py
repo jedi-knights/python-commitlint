@@ -38,19 +38,3 @@ class CaseType(StrEnum):
     SENTENCE_CASE = "sentence-case"
     SNAKE_CASE = "snake-case"
     START_CASE = "start-case"
-
-
-class CommitType(StrEnum):
-    """The standard Conventional Commits type vocabulary."""
-
-    BUILD = "build"
-    CHORE = "chore"
-    CI = "ci"
-    DOCS = "docs"
-    FEAT = "feat"
-    FIX = "fix"
-    PERF = "perf"
-    REFACTOR = "refactor"
-    REVERT = "revert"
-    STYLE = "style"
-    TEST = "test"

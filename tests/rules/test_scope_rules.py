@@ -1,7 +1,7 @@
 import pytest
 
-from python_commitlint.core.enums import RuleCondition, Severity
-from python_commitlint.core.models import CommitMessage, RuleConfig
+from python_commitlint.core.enums import RuleCondition
+from python_commitlint.core.models import CommitMessage
 from python_commitlint.rules.scope_rules import (
     ScopeCaseRule,
     ScopeEmptyRule,
@@ -9,6 +9,7 @@ from python_commitlint.rules.scope_rules import (
     ScopeMaxLengthRule,
     ScopeMinLengthRule,
 )
+from tests.rules._helpers import _config
 
 
 def _commit(scope: str = "api") -> CommitMessage:
@@ -30,12 +31,6 @@ def _commit_no_scope() -> CommitMessage:
         subject="subject",
         is_conventional=True,
     )
-
-
-def _config(
-    condition: RuleCondition, value=None, severity: Severity = Severity.ERROR
-) -> RuleConfig:
-    return RuleConfig(severity=severity, condition=condition, value=value)
 
 
 # --- ScopeEmptyRule ---
@@ -155,6 +150,15 @@ def test_scope_enum_rule_with_slash_delimiter() -> None:
     config = _config(RuleCondition.ALWAYS, value=["api", "auth"])
     commit = _commit("api/auth")
     assert rule.validate(commit, config) is None
+
+
+def test_scope_enum_rule_raises_when_value_missing() -> None:
+    from python_commitlint.core.exceptions import ConfigurationError
+
+    rule = ScopeEnumRule()
+    config = _config(RuleCondition.ALWAYS, value=None)
+    with pytest.raises(ConfigurationError, match="requires a 'value'"):
+        rule.validate(_commit("api"), config)
 
 
 def test_scope_enum_rule_skips_empty_scope() -> None:

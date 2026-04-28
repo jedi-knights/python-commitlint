@@ -6,7 +6,7 @@ from python_commitlint.core.models import (
     RuleConfig,
     ValidationError,
 )
-from python_commitlint.rules.base import BaseRule
+from python_commitlint.rules.base import BaseRule, config_value_or
 from python_commitlint.rules.case_validators import CaseValidator
 
 
@@ -77,7 +77,7 @@ class SubjectFullStopRule(BaseRule):
         if not commit.subject:
             return None
 
-        stop_char = config.value if config.value is not None else "."
+        stop_char = config_value_or(config, ".")
         ends_with_stop = commit.subject.endswith(stop_char)
         should_end_with_stop = config.condition == RuleCondition.ALWAYS
 
@@ -104,7 +104,7 @@ class SubjectMinLengthRule(BaseRule):
         if not commit.subject:
             return None
 
-        min_length = config.value if config.value is not None else 0
+        min_length = config_value_or(config, 0)
         is_valid = len(commit.subject) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -128,7 +128,7 @@ class SubjectMaxLengthRule(BaseRule):
         if not commit.subject:
             return None
 
-        max_length = config.value if config.value is not None else float("inf")
+        max_length = config_value_or(config, float("inf"))
         is_valid = len(commit.subject) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 

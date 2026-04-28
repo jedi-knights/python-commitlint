@@ -8,7 +8,7 @@ from python_commitlint.core.models import (
     RuleConfig,
     ValidationError,
 )
-from python_commitlint.rules.base import BaseRule
+from python_commitlint.rules.base import BaseRule, config_value_or
 from python_commitlint.rules.case_validators import CaseValidator
 
 # A line that consists entirely of a URL (with optional surrounding whitespace)
@@ -82,7 +82,7 @@ class BodyMaxLengthRule(BaseRule):
         if not commit.body:
             return None
 
-        max_length = config.value if config.value is not None else float("inf")
+        max_length = config_value_or(config, float("inf"))
         is_valid = len(commit.body) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -115,7 +115,7 @@ class BodyMaxLineLengthRule(BaseRule):
         if config.condition != RuleCondition.ALWAYS:
             return None
 
-        max_length = config.value if config.value is not None else float("inf")
+        max_length = config_value_or(config, float("inf"))
         for line in commit.body.split("\n"):
             if _URL_ONLY_LINE.match(line):
                 continue
@@ -140,7 +140,7 @@ class BodyMinLengthRule(BaseRule):
         if not commit.body:
             return None
 
-        min_length = config.value if config.value is not None else 0
+        min_length = config_value_or(config, 0)
         is_valid = len(commit.body) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -164,7 +164,7 @@ class BodyFullStopRule(BaseRule):
         if not commit.body:
             return None
 
-        stop_char = config.value if config.value is not None else "."
+        stop_char = config_value_or(config, ".")
         ends_with_stop = commit.body.rstrip().endswith(stop_char)
         should_end_with_stop = config.condition == RuleCondition.ALWAYS
 

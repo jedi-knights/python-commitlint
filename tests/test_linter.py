@@ -3,11 +3,9 @@ from pathlib import Path
 import pytest
 
 from python_commitlint.core.enums import Severity
-from python_commitlint.core.models import ValidationError
 from python_commitlint.linter import (
     CommitLinter,
     CommitLinterFactory,
-    _categorize_violation,
 )
 
 # --- valid commits ---
@@ -133,7 +131,7 @@ rules:
     value:
       - feat
 """)
-    linter = CommitLinterFactory.create(config_path=str(config))
+    linter = CommitLinterFactory.create(config_path=config)
     result = linter.lint("chore: should pass since type-enum is disabled")
     assert result.valid is True
 
@@ -149,7 +147,7 @@ rules:
     severity: error
     condition: always
 """)
-    linter = CommitLinterFactory.create(config_path=str(config))
+    linter = CommitLinterFactory.create(config_path=config)
     result = linter.lint("feat: valid commit")
     assert result.valid is True
 
@@ -174,7 +172,7 @@ rules:
       - feat
       - fix
 """)
-    linter = CommitLinterFactory.create(config_path=str(config))
+    linter = CommitLinterFactory.create(config_path=config)
     assert linter.lint("feat: valid type").valid is True
 
 
@@ -191,35 +189,24 @@ rules:
       - feat
       - fix
 """)
-    linter = CommitLinterFactory.create(config_path=str(config))
+    linter = CommitLinterFactory.create(config_path=config)
     assert linter.lint("chore: not in enum").valid is False
 
 
-# --- _categorize_violation helper ---
+# Severity routing is covered through the public lint() API: the default
+# `body-leading-blank` rule has WARNING severity, the default
+# `subject-empty` rule has ERROR severity, and disabled rules are exercised
+# by `test_disabled_rule_is_skipped`. No need to test the private
+# `_categorize_violation` helper directly.
 
 
-def test_categorize_violation_routes_error() -> None:
-    errors: list[ValidationError] = []
-    warnings: list[ValidationError] = []
-    v = ValidationError(rule="r", message="m", severity=Severity.ERROR)
-    _categorize_violation(v, errors, warnings)
-    assert len(errors) == 1
-    assert len(warnings) == 0
-
-
-def test_categorize_violation_routes_warning() -> None:
-    errors: list[ValidationError] = []
-    warnings: list[ValidationError] = []
-    v = ValidationError(rule="r", message="m", severity=Severity.WARNING)
-    _categorize_violation(v, errors, warnings)
-    assert len(errors) == 0
-    assert len(warnings) == 1
-
-
-def test_categorize_violation_ignores_disabled() -> None:
-    errors: list[ValidationError] = []
-    warnings: list[ValidationError] = []
-    v = ValidationError(rule="r", message="m", severity=Severity.DISABLED)
-    _categorize_violation(v, errors, warnings)
-    assert len(errors) == 0
-    assert len(warnings) == 0
+def test_warning_severity_rule_routes_to_warnings(
+    linter: CommitLinter,
+) -> None:
+    # `body-leading-blank` is severity=warning in the conventional preset.
+    # A body without a leading blank line should produce a warning, not
+    # an error, and `result.valid` should remain True.
+    result = linter.lint("feat: subject\nimmediate body")
+    assert result.has_warnings is True
+    assert any(w.rule == "body-leading-blank" for w in result.warnings)
+    assert result.valid is True

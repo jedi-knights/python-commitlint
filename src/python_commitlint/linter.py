@@ -1,5 +1,7 @@
 """The commit linter — orchestrates parsing, rule dispatch, and aggregation."""
 
+from pathlib import Path
+
 from python_commitlint.config.configuration import (
     ConfigurationLoaderFactory,
 )
@@ -56,7 +58,7 @@ class CommitLinter:
         parser: CommitParserProtocol,
         rule_registry: RuleRegistry,
         config_loader: ConfigurationLoaderProtocol,
-        config_path: str | None = None,
+        config_path: Path | None = None,
     ) -> None:
         """Initialize the linter and load its configuration.
 
@@ -128,7 +130,7 @@ class CommitLinterFactory:
         parser: CommitParserProtocol | None = None,
         rule_registry: RuleRegistry | None = None,
         config_loader: ConfigurationLoaderProtocol | None = None,
-        config_path: str | None = None,
+        config_path: Path | None = None,
     ) -> CommitLinter:
         """Build a :class:`CommitLinter` wired with default collaborators.
 

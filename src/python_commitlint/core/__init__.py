@@ -8,7 +8,6 @@ at the configuration boundary.
 
 from python_commitlint.core.enums import (
     CaseType,
-    CommitType,
     RuleCondition,
     Severity,
 )
@@ -35,7 +34,6 @@ __all__ = [
     "CommitLinterProtocol",
     "CommitMessage",
     "CommitParserProtocol",
-    "CommitType",
     "Configuration",
     "ConfigurationError",
     "ConfigurationLoaderProtocol",

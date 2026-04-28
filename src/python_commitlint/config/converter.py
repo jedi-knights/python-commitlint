@@ -39,12 +39,6 @@ class CommitlintConfigConverter:
         2: "error",
     }
 
-    REVERSE_SEVERITY_MAP = {
-        "disabled": 0,
-        "warning": 1,
-        "error": 2,
-    }
-
     def js_to_yaml(self, js_content: str) -> str:
         """Convert JavaScript config text to YAML text.
 

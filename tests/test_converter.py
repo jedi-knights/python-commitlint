@@ -105,6 +105,8 @@ def test_converter_severity_map_values() -> None:
 
 
 def test_converter_preserves_nested_array_values() -> None:
+    from ruamel.yaml import YAML
+
     js = """
     module.exports = {
       rules: {
@@ -113,7 +115,8 @@ def test_converter_preserves_nested_array_values() -> None:
     }
     """
     converter = CommitlintConfigConverter()
-    parsed = converter._parse_js_config(js)
+    yaml_str = converter.js_to_yaml(js)
+    parsed = YAML().load(yaml_str)
     assert parsed["rules"]["type-enum"] == [
         2,
         "always",

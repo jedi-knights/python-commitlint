@@ -1,7 +1,7 @@
 import pytest
 
-from python_commitlint.core.enums import RuleCondition, Severity
-from python_commitlint.core.models import CommitMessage, RuleConfig
+from python_commitlint.core.enums import RuleCondition
+from python_commitlint.core.models import CommitMessage
 from python_commitlint.rules.subject_rules import (
     SubjectCaseRule,
     SubjectEmptyRule,
@@ -9,6 +9,7 @@ from python_commitlint.rules.subject_rules import (
     SubjectMaxLengthRule,
     SubjectMinLengthRule,
 )
+from tests.rules._helpers import _config
 
 
 def _commit(subject: str = "add new feature") -> CommitMessage:
@@ -19,12 +20,6 @@ def _commit(subject: str = "add new feature") -> CommitMessage:
         subject=subject,
         is_conventional=True,
     )
-
-
-def _config(
-    condition: RuleCondition, value=None, severity: Severity = Severity.ERROR
-) -> RuleConfig:
-    return RuleConfig(severity=severity, condition=condition, value=value)
 
 
 # --- SubjectEmptyRule ---
