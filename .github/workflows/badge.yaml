@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   badge:
@@ -40,7 +42,7 @@ jobs:
         run: uv sync --extra dev
 
       - name: Run tests with coverage
-        run: uv run pytest --cov --cov-report=xml
+        run: uv run pytest --cov --cov-report=xml --cov-report=html
 
       - name: Update coverage badge
         uses: jedi-knights/coverage-badge@v0
@@ -52,3 +54,20 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git diff --quiet README.md || (git add README.md && git commit -m "chore: update coverage badge [skip ci]" && git push)
+
+      - name: Upload coverage report as Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: htmlcov
+
+  deploy:
+    name: Deploy Coverage Report
+    needs: badge
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
