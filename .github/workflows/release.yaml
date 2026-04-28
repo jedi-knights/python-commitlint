@@ -11,6 +11,13 @@ permissions:
   issues: write
   pull-requests: write
 
+# Prevent concurrent releases from racing on tag/version bumps. Cancelling
+# in progress is unsafe — a half-published release leaves the repo with
+# orphaned tags or missing GitHub Releases.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     if: github.ref == 'refs/heads/main'
