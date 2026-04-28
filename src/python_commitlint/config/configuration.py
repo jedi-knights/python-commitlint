@@ -105,7 +105,7 @@ class ConfigurationLoader:
         }
     }
 
-    def load(self, config_path: str | None = None) -> Configuration:
+    def load(self, config_path: Path | None = None) -> Configuration:
         """Load and parse a :class:`Configuration`.
 
         Args:
@@ -123,20 +123,21 @@ class ConfigurationLoader:
         raw_config = self._load_raw_config(config_path)
         return self._parse_configuration(raw_config)
 
-    def _load_raw_config(self, config_path: str | None) -> dict[str, Any]:
+    def _load_raw_config(self, config_path: Path | None) -> dict[str, Any]:
         if config_path:
             return self._read_config_file(config_path)
 
         for config_file in self.DEFAULT_CONFIG_FILES:
-            if Path(config_file).exists():
-                return self._read_config_file(config_file)
+            candidate = Path(config_file)
+            if candidate.exists():
+                return self._read_config_file(candidate)
 
         return copy.deepcopy(self.CONVENTIONAL_CONFIG)
 
-    def _read_config_file(self, path: str) -> dict[str, Any]:
+    def _read_config_file(self, path: Path) -> dict[str, Any]:
         yaml = YAML()
         yaml.preserve_quotes = True
-        with Path(path).open("r") as f:
+        with path.open("r") as f:
             config = yaml.load(f) or {}
 
         if "extends" in config:

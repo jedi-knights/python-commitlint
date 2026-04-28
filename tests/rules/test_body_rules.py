@@ -1,7 +1,7 @@
 import pytest
 
-from python_commitlint.core.enums import RuleCondition, Severity
-from python_commitlint.core.models import CommitMessage, RuleConfig
+from python_commitlint.core.enums import RuleCondition
+from python_commitlint.core.models import CommitMessage
 from python_commitlint.rules.body_rules import (
     BodyCaseRule,
     BodyEmptyRule,
@@ -11,6 +11,7 @@ from python_commitlint.rules.body_rules import (
     BodyMaxLineLengthRule,
     BodyMinLengthRule,
 )
+from tests.rules._helpers import _config
 
 
 def _commit(body: str = "", raw: str = "") -> CommitMessage:
@@ -23,12 +24,6 @@ def _commit(body: str = "", raw: str = "") -> CommitMessage:
         body=body,
         is_conventional=True,
     )
-
-
-def _config(
-    condition: RuleCondition, value=None, severity: Severity = Severity.ERROR
-) -> RuleConfig:
-    return RuleConfig(severity=severity, condition=condition, value=value)
 
 
 # --- BodyEmptyRule ---

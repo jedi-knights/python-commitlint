@@ -1,3 +1,10 @@
+"""Invoke task definitions for development workflows.
+
+Provides tasks for linting, formatting, testing, building, and releasing
+the package, plus auto-installation of the pinned go-semantic-release
+binary used by the release workflow locally.
+"""
+
 from __future__ import annotations
 
 import platform
@@ -54,7 +61,11 @@ def _install_semantic_release() -> Path:
     TOOLS_DIR.mkdir(exist_ok=True)
     archive_path = TOOLS_DIR / archive_name
     print(f"Downloading {url}")
-    urllib.request.urlretrieve(url, archive_path)
+    with (
+        urllib.request.urlopen(url, timeout=60) as response,  # noqa: S310
+        archive_path.open("wb") as out,
+    ):
+        shutil.copyfileobj(response, out)
 
     with tarfile.open(archive_path) as tf:
         tf.extract("semantic-release", path=TOOLS_DIR, filter="data")

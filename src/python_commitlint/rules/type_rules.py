@@ -1,12 +1,13 @@
 """Rules that validate the commit ``type`` (the token before the colon)."""
 
 from python_commitlint.core.enums import CaseType, RuleCondition
+from python_commitlint.core.exceptions import ConfigurationError
 from python_commitlint.core.models import (
     CommitMessage,
     RuleConfig,
     ValidationError,
 )
-from python_commitlint.rules.base import BaseRule
+from python_commitlint.rules.base import BaseRule, config_value_or
 from python_commitlint.rules.case_validators import CaseValidator
 
 
@@ -68,7 +69,11 @@ class TypeEnumRule(BaseRule):
         if not commit.type:
             return None
 
-        allowed_types = config.value or []
+        if config.value is None:
+            raise ConfigurationError(
+                f"{self.name}: requires a 'value' (list of allowed types)"
+            )
+        allowed_types = config.value
         is_in_enum = commit.type in allowed_types
         should_be_in_enum = config.condition == RuleCondition.ALWAYS
 
@@ -95,7 +100,7 @@ class TypeMinLengthRule(BaseRule):
         if not commit.type:
             return None
 
-        min_length = config.value if config.value is not None else 0
+        min_length = config_value_or(config, 0)
         is_valid = len(commit.type) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -119,7 +124,7 @@ class TypeMaxLengthRule(BaseRule):
         if not commit.type:
             return None
 
-        max_length = config.value if config.value is not None else float("inf")
+        max_length = config_value_or(config, float("inf"))
         is_valid = len(commit.type) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 

@@ -8,7 +8,7 @@ from python_commitlint.core.models import (
     RuleConfig,
     ValidationError,
 )
-from python_commitlint.rules.base import BaseRule
+from python_commitlint.rules.base import BaseRule, config_value_or
 
 _FOOTER_TOKEN_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"^BREAKING[- ]CHANGE:"),
@@ -96,7 +96,7 @@ class FooterMaxLengthRule(BaseRule):
         if not commit.footer:
             return None
 
-        max_length = config.value if config.value is not None else float("inf")
+        max_length = config_value_or(config, float("inf"))
         is_valid = len(commit.footer) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -126,7 +126,7 @@ class FooterMaxLineLengthRule(BaseRule):
         if config.condition != RuleCondition.ALWAYS:
             return None
 
-        max_length = config.value if config.value is not None else float("inf")
+        max_length = config_value_or(config, float("inf"))
         for line in commit.footer.split("\n"):
             if len(line) > max_length:
                 return self._create_error(
@@ -149,7 +149,7 @@ class FooterMinLengthRule(BaseRule):
         if not commit.footer:
             return None
 
-        min_length = config.value if config.value is not None else 0
+        min_length = config_value_or(config, 0)
         is_valid = len(commit.footer) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 

@@ -1,7 +1,7 @@
 import pytest
 
-from python_commitlint.core.enums import RuleCondition, Severity
-from python_commitlint.core.models import CommitMessage, RuleConfig
+from python_commitlint.core.enums import RuleCondition
+from python_commitlint.core.models import CommitMessage
 from python_commitlint.rules.type_rules import (
     TypeCaseRule,
     TypeEmptyRule,
@@ -9,6 +9,7 @@ from python_commitlint.rules.type_rules import (
     TypeMaxLengthRule,
     TypeMinLengthRule,
 )
+from tests.rules._helpers import _config
 
 
 def _commit(type: str = "feat") -> CommitMessage:
@@ -19,12 +20,6 @@ def _commit(type: str = "feat") -> CommitMessage:
         subject="subject",
         is_conventional=True,
     )
-
-
-def _config(
-    condition: RuleCondition, value=None, severity: Severity = Severity.ERROR
-) -> RuleConfig:
-    return RuleConfig(severity=severity, condition=condition, value=value)
 
 
 # --- TypeEmptyRule ---
@@ -139,6 +134,15 @@ def test_type_enum_rule_never_condition_fails_when_in_enum() -> None:
     config = _config(RuleCondition.NEVER, value=["feat"])
     result = rule.validate(_commit("feat"), config)
     assert result is not None
+
+
+def test_type_enum_rule_raises_when_value_missing() -> None:
+    from python_commitlint.core.exceptions import ConfigurationError
+
+    rule = TypeEnumRule()
+    config = _config(RuleCondition.ALWAYS, value=None)
+    with pytest.raises(ConfigurationError, match="requires a 'value'"):
+        rule.validate(_commit("feat"), config)
 
 
 def test_type_enum_rule_skips_empty_type() -> None:

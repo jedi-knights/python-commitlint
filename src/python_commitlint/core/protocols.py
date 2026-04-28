@@ -5,6 +5,7 @@ rule, and configuration-loading collaborators so alternative implementations
 can be plugged in without inheritance.
 """
 
+from pathlib import Path
 from typing import Protocol
 
 from python_commitlint.core.models import (
@@ -59,7 +60,7 @@ class RuleProtocol(Protocol):
 class ConfigurationLoaderProtocol(Protocol):
     """Loads a :class:`Configuration` from a path or built-in default."""
 
-    def load(self, config_path: str | None = None) -> Configuration:
+    def load(self, config_path: Path | None = None) -> Configuration:
         """Load the configuration and return a fully-resolved value.
 
         Args:

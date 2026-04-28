@@ -1,5 +1,5 @@
-from python_commitlint.core.enums import RuleCondition, Severity
-from python_commitlint.core.models import CommitMessage, RuleConfig
+from python_commitlint.core.enums import RuleCondition
+from python_commitlint.core.models import CommitMessage
 from python_commitlint.rules.footer_rules import (
     FooterEmptyRule,
     FooterLeadingBlankRule,
@@ -7,6 +7,7 @@ from python_commitlint.rules.footer_rules import (
     FooterMaxLineLengthRule,
     FooterMinLengthRule,
 )
+from tests.rules._helpers import _config
 
 
 def _commit(footer: str = "", raw: str = "") -> CommitMessage:
@@ -22,12 +23,6 @@ def _commit(footer: str = "", raw: str = "") -> CommitMessage:
         footer=footer,
         is_conventional=True,
     )
-
-
-def _config(
-    condition: RuleCondition, value=None, severity: Severity = Severity.ERROR
-) -> RuleConfig:
-    return RuleConfig(severity=severity, condition=condition, value=value)
 
 
 # --- FooterEmptyRule ---

@@ -10,6 +10,22 @@ from python_commitlint.core.models import (
 from python_commitlint.core.protocols import RuleProtocol
 
 
+def config_value_or[T](config: RuleConfig, default: T) -> T:
+    """Return ``config.value`` if it is not ``None``, otherwise ``default``.
+
+    Avoids the falsy-zero bug of ``config.value or default``: a configured
+    ``value: 0`` is preserved, not silently replaced by the default.
+
+    Note:
+        ``RuleConfig.value`` is typed ``Any``, so the ``T`` return type is
+        nominally a lie when the YAML stores a value whose Python type
+        doesn't match ``default``. Callers are expected to validate the
+        shape of ``config.value`` themselves (or accept downstream
+        ``TypeError`` if the YAML is malformed).
+    """
+    return config.value if config.value is not None else default
+
+
 class BaseRule(RuleProtocol, ABC):
     """Abstract base for all built-in commitlint rules.
 

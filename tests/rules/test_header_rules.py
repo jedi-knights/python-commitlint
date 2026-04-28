@@ -1,7 +1,7 @@
 import pytest
 
-from python_commitlint.core.enums import RuleCondition, Severity
-from python_commitlint.core.models import CommitMessage, RuleConfig
+from python_commitlint.core.enums import RuleCondition
+from python_commitlint.core.models import CommitMessage
 from python_commitlint.rules.header_rules import (
     HeaderCaseRule,
     HeaderFullStopRule,
@@ -9,16 +9,11 @@ from python_commitlint.rules.header_rules import (
     HeaderMinLengthRule,
     HeaderTrimRule,
 )
+from tests.rules._helpers import _config
 
 
 def _commit(header: str) -> CommitMessage:
     return CommitMessage(raw=header, header=header, is_conventional=True)
-
-
-def _config(
-    condition: RuleCondition, value=None, severity: Severity = Severity.ERROR
-) -> RuleConfig:
-    return RuleConfig(severity=severity, condition=condition, value=value)
 
 
 # --- HeaderMaxLengthRule ---

@@ -1,5 +1,7 @@
 """Rules that validate the optional scope inside ``type(scope): subject``."""
 
+from typing import Any
+
 from python_commitlint.core.enums import CaseType, RuleCondition
 from python_commitlint.core.exceptions import ConfigurationError
 from python_commitlint.core.models import (
@@ -9,7 +11,7 @@ from python_commitlint.core.models import (
     ScopeEnumValidation,
     ValidationError,
 )
-from python_commitlint.rules.base import BaseRule
+from python_commitlint.rules.base import BaseRule, config_value_or
 from python_commitlint.rules.case_validators import CaseValidator
 
 _DEFAULT_SCOPE_DELIMITERS = ("/", "\\", ",")
@@ -25,7 +27,9 @@ def _split_scope(scope: str, delimiters: list[str]) -> list[str]:
     return [p for p in parts if p]
 
 
-def _build_case_validation(rule_name: str, value: dict) -> CaseValidation:
+def _build_case_validation(
+    rule_name: str, value: dict[str, Any]
+) -> CaseValidation:
     try:
         return CaseValidation(**value)
     except TypeError as e:
@@ -35,7 +39,7 @@ def _build_case_validation(rule_name: str, value: dict) -> CaseValidation:
 
 
 def _build_scope_enum_validation(
-    rule_name: str, value: dict
+    rule_name: str, value: dict[str, Any]
 ) -> ScopeEnumValidation:
     try:
         return ScopeEnumValidation(**value)
@@ -129,7 +133,11 @@ class ScopeEnumRule(BaseRule):
             allowed_scopes = validation.scopes
             delimiters = validation.delimiters
         else:
-            allowed_scopes = config.value or []
+            if config.value is None:
+                raise ConfigurationError(
+                    f"{self.name}: requires a 'value' (list of allowed scopes)"
+                )
+            allowed_scopes = config.value
             delimiters = list(_DEFAULT_SCOPE_DELIMITERS)
 
         scope_parts = _split_scope(commit.scope, delimiters)
@@ -159,7 +167,7 @@ class ScopeMinLengthRule(BaseRule):
         if not commit.scope:
             return None
 
-        min_length = config.value if config.value is not None else 0
+        min_length = config_value_or(config, 0)
         is_valid = len(commit.scope) >= min_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
@@ -183,7 +191,7 @@ class ScopeMaxLengthRule(BaseRule):
         if not commit.scope:
             return None
 
-        max_length = config.value if config.value is not None else float("inf")
+        max_length = config_value_or(config, float("inf"))
         is_valid = len(commit.scope) <= max_length
         should_be_valid = config.condition == RuleCondition.ALWAYS
 
