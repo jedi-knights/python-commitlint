@@ -5,7 +5,7 @@ A pure-Python implementation of [commitlint](https://commitlint.js.org/) for val
 ![CI](https://github.com/jedi-knights/python-commitlint/actions/workflows/ci.yaml/badge.svg)
 ![Release](https://github.com/jedi-knights/python-commitlint/actions/workflows/release.yaml/badge.svg)
 ![Coverage Badge](https://github.com/jedi-knights/python-commitlint/actions/workflows/badge.yaml/badge.svg)
-[![Python](https://img.shields.io/badge/python-3.13%2B-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Coverage](https://img.shields.io/badge/Coverage-95.2%25-brightgreen)](https://jedi-knights.github.io/python-commitlint/)
@@ -45,7 +45,7 @@ A pure-Python implementation of [commitlint](https://commitlint.js.org/) for val
 
 ## Requirements
 
-- Python **3.13** or newer
+- Python **3.12** or newer
 - [`uv`](https://github.com/astral-sh/uv) (recommended) or `pip` for installation
 - For development: `uv sync --extra dev` installs `ruff`, `pytest`, `pytest-cov`, `pytest-mock`, and `invoke`
 
